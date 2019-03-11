@@ -1,0 +1,23 @@
+{
+    "project_type": "javascript",
+
+    "debugMode" : 1,
+    "showFPS" : true,
+    "frameRate" : 60,
+    "noCache" : false,
+    "id" : "gameCanvas",
+    "renderMode" : 0,
+    "engineDir":"frameworks/cocos2d-html5",
+
+    "modules" : ["cocos2d","chipmunk","extensions"],
+
+    "jsList" : [
+        "src/resource.js",
+        "src/gameConfig.js",
+        "src/app.js",
+        "src/GameScene.js",
+        "src/PetsSprite.js",
+        "src/FireSprite.js",
+        "src/EffectLayer.js"
+    ]
+}

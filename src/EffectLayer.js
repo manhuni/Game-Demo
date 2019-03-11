@@ -33,13 +33,19 @@ var EffectLayer = cc.Layer.extend({
             opacity: 255,
             zIndex: gameConfig.INDEX.ANIMATION_INDEX
         })
+        cc.log("before",gameConfig.INDEX.ANIMATION_INDEX)
+        cc.log("before",pet);
+
     },
     glowDownPet: function(pet) {
         pet.attr({
             scale: pet.scale - 0.1,
             opacity: 240,
             zIndex: gameConfig.INDEX.GAMELAYER_INDEX
-        })
+        });
+        cc.log("index after",gameConfig.INDEX.GAMELAYER_INDEX)
+        cc.log("after",pet);
+
     },
     dropPetAnimation: function(pet) {
         cc.log('Phan animation khi nguoi dung noi duoc 3 pet =))')

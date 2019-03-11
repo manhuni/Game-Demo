@@ -47,13 +47,18 @@ var typeOfPet = [
     'tsum0',
     'tsum1',
     'tsum2',
+    'tsum2',
+    'tsum3',
     'tsum3',
     'tsum4',
+    'tsum5',
     'tsum5',
     'tsum6',
     'tsum7',
     'tsum8',
+    'tsum8',
     'tsum9',
+    'tsum10',
     'tsum10'
 ];
-var massOfPets = [100,100,100,100,100,100];
+var massOfPets = [100,100,100,100,100,100,100,100,100,100,100,100];

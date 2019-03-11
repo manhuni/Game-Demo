@@ -3,6 +3,7 @@ var PetSprite = cc.PhysicsSprite.extend({
     isVisited: false,
     colorType: null,
     collision_type: 0,
+    tmpBlocked: false,
     gameGroup: gameConfig.GAMEGROUP.PET,
     ctor: function(img) {
         this._super();

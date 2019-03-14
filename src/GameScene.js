@@ -102,9 +102,9 @@ var GameLayer = cc.Layer.extend({
         menu.setPosition(size.width - 100, 170);
         this.addChild(menu, gameConfig.INDEX.SHUFFLE_INDEX);
         //create inner background
-        var sprite = cc.Sprite.create(res.gameBackground_inner);
-        sprite.setPosition(cc.p(size.width / 2, size.height / 2));
-        this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
+        // var sprite = cc.Sprite.create(res.gameBackground_inner);
+        // sprite.setPosition(cc.p(size.width / 2, size.height / 2));
+        // this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
     },
     initPhysicsWorld: function() {
 
@@ -129,47 +129,47 @@ var GameLayer = cc.Layer.extend({
         return space
     },
     shuffleAllPhysics: function() {
-        cc.log("Before");
-        cc.log(this.space.constraints);
-        var _this = this;
-        var maxForce = 15.00;
-        this._shuffle._timesShuffle++;
-        if (this._shuffle._timesShuffle < 10) {
+        // cc.log("Before");
+        // cc.log(this.space.constraints);
+        // var _this = this;
+        // var maxForce = 15.00;
+        // this._shuffle._timesShuffle++;
+        // if (this._shuffle._timesShuffle < 10) {
 
-            for (var i = 0; i < this._children.length; i++) {
-                if (_this._children[i].gameGroup != 0) {
-                    continue;
-                } else {
-                    var rate = _this._children[i].body.a + _this._shuffle._stepShuffle;
-                    rate > maxForce ? rate = maxForce : rate = rate;
-                    var physicsSprite = _this._children[i];
-                    var body = physicsSprite.body;
-                    var motor = new cp.SimpleMotor(_this.space.staticBody, body, rate);
+        //     for (var i = 0; i < this._children.length; i++) {
+        //         if (_this._children[i].gameGroup != 0) {
+        //             continue;
+        //         } else {
+        //             var rate = _this._children[i].body.a + _this._shuffle._stepShuffle;
+        //             rate > maxForce ? rate = maxForce : rate = rate;
+        //             var physicsSprite = _this._children[i];
+        //             var body = physicsSprite.body;
+        //             var motor = new cp.SimpleMotor(_this.space.staticBody, body, rate);
 
-                    _this.space.addConstraint(motor);
+        //             _this.space.addConstraint(motor);
 
-                    _this._shuffle._rotary.push({
-                        target: body,
-                        constraint: motor,
-                    });
-                    _this._shuffle._stepShuffle++;
+        //             _this._shuffle._rotary.push({
+        //                 target: body,
+        //                 constraint: motor,
+        //             });
+        //             _this._shuffle._stepShuffle++;
 
-                }
-            };
-        } else {
-            // cc.log("Haha",_this._shuffle._rotary)
-            // for (var i = 0; i < _this._shuffle._rotary.length; i++) {
+        //         }
+        //     };
+        // } else {
+        //     // cc.log("Haha",_this._shuffle._rotary)
+        //     // for (var i = 0; i < _this._shuffle._rotary.length; i++) {
 
-            //     _this.space.removeConstraint(_this._shuffle._rotary[i].constraint); 
-            //     cc.log("Hu",i)
-            // }; 
+        //     //     _this.space.removeConstraint(_this._shuffle._rotary[i].constraint); 
+        //     //     cc.log("Hu",i)
+        //     // }; 
 
-        }
+        // }
 
-        // setTimeout(function(){ 
+        // setTimeout(function() {
         //     for (var i = 0; i < _this.space.constraints.length; i++) {
-        //         _this.space.removeConstraint(_this.space.constraints[i]);                
-        //     };         
+        //         _this.space.removeConstraint(_this.space.constraints[i]);
+        //     };
         // }, 5000);
     },
     showPhysicWorld: function(visiable) {
@@ -331,24 +331,20 @@ var petListener = cc.EventListener.create({
                 petObject.push(allChildenOfGameLayer[i]);
             }
         }
-        cc.log(petObject);
         //calculate distance between click point vs all to find point nearest
         for (var i = 0; i < petObject.length; i++) {
             var distClickedWithPets = cc.pDistance(touch.getLocation(), petObject[i].getPosition());
-            if (distClickedWithPets < 45) {
-
-                cc.log(petObject[i].colorType);
+            if (distClickedWithPets < joinerConfig.radiusCanClickedFromCenterPet) {
                 petObject[i].opacity = 255;
                 // // increase number of segment(purpose for count limit point, ex: 3 seg then allow clear pet)
                 target._effectNode._counterSegment = target._effectNode._counterSegment + 1;
-                target._effectNode.addSegmentLabel();
-                target._effectNode.setSegmentLabel(target._effectNode._counterSegment);
+
                 // //Adding a fire animation at center target pet
                 var fireAnimation = target._effectNode.addFireAnim(petObject[i]);
                 petObject[i].isVisited = true;
 
-                firstPoint = petObject[i].getPosition();
-                tempWidth = petObject[i].getBoundingBox();
+                // firstPoint = petObject[i].getPosition();
+                // tempWidth = petObject[i].getBoundingBox();
                 // //Group all component of pet(fire, join, it'self to control(delete, point, ...))
                 target._effectNode.petEffected.push({
                         target: petObject[i],
@@ -356,7 +352,7 @@ var petListener = cc.EventListener.create({
                         joiner: null
                     })
                     // //Magnify target pet(effect ... )
-                target._effectNode.glowUpPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
+                // target._effectNode.glowUpPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
                 return true;
             }
         }
@@ -365,6 +361,7 @@ var petListener = cc.EventListener.create({
     onTouchMoved: function(touch, event) {
         // We will add joiner from here
         var target = event.getCurrentTarget();
+        var lastTarget = target._effectNode.petEffected[target._effectNode.petEffected.length - 1]["target"];
         // Check all position of pets to evaluate distance need join
         var allChildenOfGameLayer = target._children;
         // position of all pets and filter only pets
@@ -380,93 +377,50 @@ var petListener = cc.EventListener.create({
         // Find pets none visted, if non visted then push into an array to calculate distance
         var petNoneVisted = [];
         for (var i = 0; i < petObject.length; i++) {
-            if (!petObject[i].isVisited && !petObject[i].tmpBlocked) {
+            if (!petObject[i].isVisited) {
                 petNoneVisted.push(petObject[i]);
             }
         }
         // Then we need calculate distance between pos of first pet
         // With touch location and compare with position of pets non visited
-        var orginRange = tempWidth.width / 2;
-        var bonusLength = tempWidth.width / 4;
-        var totalRange = orginRange + bonusLength;
 
-        var distanceRuntime = cc.pDistance(firstPoint, touch.getLocation());
-        if (distanceRuntime > tempWidth.width / 2 && distanceRuntime < totalRange) {
+        var originRange = lastTarget.getBoundingBox().width / 2;
+        var bonusLength = lastTarget.getBoundingBox().width / 2;
+        var totalRange = originRange + bonusLength;
+
+        var distanceRuntime = cc.pDistance(lastTarget.getPosition(), touch.getLocation());
+
+        if (distanceRuntime > originRange && distanceRuntime < totalRange) {
             // Now time for play this will determine draw or not
-            cc.log("OK");
-            cc.log("totalRange", totalRange);
-            cc.log("distanceRuntime", distanceRuntime);
+            if(target._effectNode.petEffected.length >= 2){
+                var alreadyJoinPet = target.findPetHaveAlreadyJoin(target,touch.getLocation(),target._effectNode.petEffected);
+            }
+            var nearestPoint = target.findNearestPosition(lastTarget, touch.getLocation(), petNoneVisted);
+            
 
-            for (var i = 0; i < petNoneVisted.length; i++) {
-                //near object target to joiner add, but need check a condition of pint intersect point;
-                var distancePosition = cc.pDistance(touch.getLocation(), petNoneVisted[i].getPosition());
-
-                if (distancePosition < 50) {
-                    cc.log("Be hon 20");
-                    // If distance offset diference 2(closed) then create a sprite with first point
-                    // Here for find same color/type/style
-                    var tmpTarget = target._effectNode.petEffected[target._effectNode.petEffected.length - 1]["target"];
-                    if (tmpTarget.colorType == petNoneVisted[i].colorType) {
-                        cc.log("Same color");
-                        var radiusScan = cc.pDistance(tmpTarget.getPosition(), petNoneVisted[i].getPosition());
-                        //need a loop round to calculate angle and dist
-                        var angleRelativePets = [];
-                        var offSetPosPermited = 30; //+ - 5 degress
-                        // here is for range larger find some pet around with radius equal to target -> destination
-                        for (var j = 0; j < petNoneVisted.length; j++) {
-
-                            var distanceOtherNoneVisted = cc.pDistance(tmpTarget.getPosition(), petNoneVisted[j].getPosition());
-
-                            if (distanceOtherNoneVisted < radiusScan && petNoneVisted[j] != tmpTarget) {
-
-                                //find angle between object and determine which joiner can pass through other or not;
-                                var posPetA = tmpTarget.getPosition();
-                                var posPetB = petNoneVisted[j].getPosition();
-                                var destTarget = petNoneVisted[i].getPosition();
-
-                                var angle = cc.radiansToDegrees(Math.atan2(posPetB.y - posPetA.y, posPetB.x - posPetA.x));
-                                var angleDest = cc.radiansToDegrees(Math.atan2(destTarget.y - posPetA.y, destTarget.x - posPetA.x));
-
-                                angleRelativePets.push({
-                                    angle: angle,
-                                    angleDest: angleDest,
-                                    pet: petNoneVisted[j],
-                                    style: petNoneVisted[j].colorType
-                                });
-
-                                
-                            }
-                        }//end for pass through
-
-                        for (var l = 0; l < angleRelativePets.length; l++) {
-
-                            var angle = angleRelativePets[l].angle;
-                            var angleDest = angleRelativePets[l].angleDest;
-
-                            if (angle > angleDest - offSetPosPermited && angle < angleDest + offSetPosPermited ) {
-                                //don't allow join if different type if same type force join it first, user can not skip
-                                cc.log("Intersect, please try other path ...");
-                                cc.log("Same color but cann't join because have other pet on this path ...");
-                                petNoneVisted[i].tmpBlocked = true;
-
-                            } else {
-                                //else what what
-                                cc.log("Khong lon hon thi lam gi??");                                
-                            }
-                        };
-
-                        if (!petNoneVisted[i].tmpBlocked) {
-                            petNoneVisted[i].isVisited = true;
+            if (nearestPoint != -1) {
+                cc.log("nearestPoint", petNoneVisted[nearestPoint].colorType);
+                if (petNoneVisted[nearestPoint].colorType == lastTarget.colorType) {
+                    //if same color then permit join but must check
+                    //have any pet cross this path joiner
+                    var radiusScan = cc.pDistance(lastTarget.getPosition(), petNoneVisted[nearestPoint].getPosition());
+                    var inrangeRadiusArray = target.findInrangePet(radiusScan, lastTarget, petNoneVisted);
+                    //check in this path have any pet under
+                    target.findPetUnderPath(inrangeRadiusArray, lastTarget, petNoneVisted[nearestPoint]).then(function(data) {
+                        var isPetUnderPathObj = data;
+                        cc.log("Data ne", isPetUnderPathObj)
+                        if (isPetUnderPathObj.isPetUnder != false) {
+                            cc.log("Biet dau, noi di chu")
+                            petNoneVisted[nearestPoint].isVisited = true;
                             // First we will blow up that sprite
                             target._effectNode._counterSegment = target._effectNode._counterSegment + 1;
-                            target._effectNode.setSegmentLabel(target._effectNode._counterSegment);
-                            // Then add sprite but need angle between two point
-                            var angle = cc.radiansToDegrees(Math.atan2(-(petNoneVisted[i].y - firstPoint.y), petNoneVisted[i].x - firstPoint.x))
-                                // define a new segment
+
+                            var angle = isPetUnderPathObj.angle;
+                            // define a new segment
                             var joinerSprite = cc.Sprite.create(res.Joiner_PNG);
                             joinerSprite.attr({
-                                    x: firstPoint.x,
-                                    y: firstPoint.y,
+                                    x: lastTarget.getPosition().x,
+                                    y: lastTarget.getPosition().y,
                                     anchorX: 0,
                                     anchorY: 0.5,
                                     scaleY: gameConfig.SCALE.JOINER_FIXED_SCALEY,
@@ -474,33 +428,37 @@ var petListener = cc.EventListener.create({
                                     rotation: angle
                                 })
                                 // TINH KHOANG CACH TU POSA -> POSB DE DIEU CHINH SCALE PHU HOP
-                            var disScaleRelative = cc.pDistance(firstPoint, petNoneVisted[i]);
+                            var disScaleRelative = cc.pDistance(lastTarget.getPosition(), petNoneVisted[nearestPoint].getPosition());
                             var widthOfJoiner = joinerSprite.width * gameConfig.SCALE.JOINER_FIXED_SCALEX; // pixel
                             var scaleRatioX = disScaleRelative * gameConfig.SCALE.JOINER_FIXED_SCALEX / widthOfJoiner;
                             joinerSprite.scaleX = scaleRatioX;
 
                             joinerSprite.setTag(gameConfig.TAG.JOIN_ANIM)
                             target._effectNode.addChild(joinerSprite, gameConfig.INDEX.EFFECTNODE_JOIN_INDEX);
-                            var fireAnimation = target._effectNode.addFireAnim(petNoneVisted[i]);
-                            firstPoint = petNoneVisted[i].getPosition();
-                            tempWidth = petNoneVisted[i].getBoundingBox();
+                            var fireAnimation = target._effectNode.addFireAnim(petNoneVisted[nearestPoint]);
+
                             // add all into one
                             target._effectNode.petEffected.push({
-                                target: petNoneVisted[i],
+                                target: petNoneVisted[nearestPoint],
                                 fireAnimation: fireAnimation,
                                 joiner: joinerSprite
                             })
-                            target._effectNode.glowDownPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 2]['target']);
-                            target._effectNode.glowUpPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
+                            // target._effectNode.glowDownPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 2]['target']);
+                            // target._effectNode.glowUpPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
+
                         }
-                    }//end same color condition
-                }//end < 20px touch vs pet
+                    }).catch(function(error) {
+                        cc.log("We are meeting an error, please check carefully ...");
+                        cc.log(error);
+                    });
+
+                }
             }
+
         }
     },
     onTouchEnded: function(touch, event) {
-        cc.log("End")
-            // o day can kiem tra dieu kien de tinh diem va loai bo cac doi tuong
+        // o day can kiem tra dieu kien de tinh diem va loai bo cac doi tuong
         var target = event.getCurrentTarget();
         // phai reset lai all target
         // o day can xet xem do dai cua doi tuong co dam bao lon hon 2 hay khong
@@ -512,13 +470,82 @@ var petListener = cc.EventListener.create({
             target._effectNode.petEffected[i]['target'].tmpBlocked = false;
         }
         target._effectNode.removeAllChildren();
-        target._effectNode.glowDownPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
+        // target._effectNode.glowDownPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
 
         target._effectNode.petEffected = [];
         target._effectNode._counterSegment = 0;
-        tempWidth = 0;
-        firstPoint = 0;
         //un register/remove all handle listenner
         return false
     }
 });
+
+GameLayer.prototype.findNearestPosition = function(lastTarget, touchPosition, arrayPosition) {
+    var indexOfShostestChild = arrayPosition.findIndex(function(element, index, array) {
+        var distancePosition = cc.pDistance(touchPosition, element);
+        return distancePosition < joinerConfig.permitedJoinerDistance && element != lastTarget;
+    });
+    return indexOfShostestChild;
+};
+GameLayer.prototype.findInrangePet = function(range, lastTarget, arrayPets) {
+    var inrangeRadius = [];
+    for (var i = 0; i < arrayPets.length; i++) {
+
+        var origin = lastTarget.getPosition();
+        var destination = arrayPets[i].getPosition();
+        var distance = cc.pDistance(origin, destination);
+        if (distance < range && arrayPets[i] != lastTarget) {
+            inrangeRadius.push(arrayPets[i]);
+        }
+    }
+    return inrangeRadius;
+};
+GameLayer.prototype.findPetUnderPath = function(inrangeRadiusArray, lastTarget, nearestTarget) {
+
+    return new Promise(function(resolve, reject) {
+        var originPos = lastTarget.getPosition();
+        var destinationPos = nearestTarget.getPosition();
+
+        var angleOrgToDest = cc.radiansToDegrees(Math.atan2(destinationPos.y - originPos.y, destinationPos.x - originPos.x));
+        var petUnderPath = [];
+        var isPetUnder = null;
+        //
+        cc.log(inrangeRadiusArray)
+
+        for (var i = 0; i < inrangeRadiusArray.length; i++) {
+
+            var inRadiusPetPos = inrangeRadiusArray[i].getPosition();
+            var angleOrgToInradius = cc.radiansToDegrees(Math.atan2(inRadiusPetPos.y - originPos.y, inRadiusPetPos.x - originPos.x));
+
+            if ((angleOrgToInradius > (angleOrgToDest - joinerConfig.offsetAngle)) && (angleOrgToInradius < (angleOrgToDest + joinerConfig.offsetAngle))) {
+                cc.log("We don't permit you join this destination pet ...");
+                cc.log("Angle org ...", angleOrgToInradius);
+                cc.log("Angle ...", angleOrgToDest);
+                isPetUnder = false;
+                break;
+            } else {
+                isPetUnder = true;
+            };
+
+        };
+        cc.log("We are checking, please wait a moment ...");
+        resolve({
+            isPetUnder: isPetUnder,
+            angle: angleOrgToDest
+        });
+    })
+
+};
+GameLayer.prototype.findPetHaveAlreadyJoin = function(target,touchPosition,arrayVisitedPet){
+    var lastTarget = arrayVisitedPet[arrayVisitedPet.length-1]["target"];
+    var previousTargetPos = arrayVisitedPet[arrayVisitedPet.length-2]["target"].getPosition();
+    var distanceLastPrePet = cc.pDistance(touchPosition,previousTargetPos);
+    //remove this joiner
+    if(distanceLastPrePet < joinerConfig.permitedJoinerDistance){
+        target._effectNode.removeChild(arrayVisitedPet[arrayVisitedPet.length-1]["joiner"],true);
+        target._effectNode.removeChild(arrayVisitedPet[arrayVisitedPet.length-1]["fireAnimation"],true);
+        target._effectNode._counterSegment = target._effectNode._counterSegment - 1;
+        //reset lastTarget
+        lastTarget.isVisited = false;
+        target._effectNode.petEffected.splice(arrayVisitedPet.length-1,1);
+    };
+}

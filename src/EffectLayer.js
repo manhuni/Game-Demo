@@ -15,36 +15,20 @@ var EffectLayer = cc.Layer.extend({
         this.addChild(fireAnim, gameConfig.INDEX.EFFECTNODE_FIRE_INDEX)
         return fireAnim
     },
-    addSegmentLabel: function() {
-        var size = cc.director.getWinSize()
-        this.segmentLabel = new cc.LabelTTF('SEG: ' + this._counterSegment, 'Arial', 20)
-        this.segmentLabel.attr({
-            x: size.width - 170,
-            y: size.height - 50
-        })
-        this.addChild(this.segmentLabel, gameConfig.INDEX.SEGMENT_LABEL_INDEX)
-    },
-    setSegmentLabel: function(number) {
-        this.segmentLabel.setString('SEG: ' + number)
-    },
     glowUpPet: function(pet) {
         pet.attr({
             scale: pet.scale + 0.1,
             opacity: 255,
-            zIndex: gameConfig.INDEX.ANIMATION_INDEX
+            // zIndex: gameConfig.INDEX.ANIMATION_INDEX
         })
-        cc.log("before",gameConfig.INDEX.ANIMATION_INDEX)
-        cc.log("before",pet);
 
     },
     glowDownPet: function(pet) {
         pet.attr({
             scale: pet.scale - 0.1,
             opacity: 240,
-            zIndex: gameConfig.INDEX.GAMELAYER_INDEX
+            // zIndex: gameConfig.INDEX.GAMELAYER_INDEX
         });
-        cc.log("index after",gameConfig.INDEX.GAMELAYER_INDEX)
-        cc.log("after",pet);
 
     },
     dropPetAnimation: function(pet) {

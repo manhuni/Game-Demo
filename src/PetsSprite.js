@@ -13,7 +13,7 @@ var PetSprite = cc.PhysicsSprite.extend({
         this.initWithSpriteFrameName(img);
         this.opacity = 240;
         //test type visual(checked!)
-        this.typeLabel = new cc.LabelTTF("", "Arial", 18);
+        this.typeLabel = new cc.LabelTTF("", "Arial", 38);
         this.typeLabel.setPosition(cc.p(this.width/2,this.height/2));
         this.addChild(this.typeLabel);
         

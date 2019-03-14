@@ -5,7 +5,7 @@ var gameConfig = {
         GAMELAYER_INDEX: 1,
         MENULAYER_INDEX: 3,
         JOINER_INDEX: 4,
-        DEBBUGLAYER_INDEX: 5,
+        DEBBUGLAYER_INDEX: 5555555555555,
         ANIMATION_INDEX: 6,
         EFFECTNODE_INDEX: 7,
         EFFECTNODE_JOIN_INDEX: 8,
@@ -48,8 +48,10 @@ var typeOfPet = [
     'tsum1',
     'tsum2',
     'tsum2',
+    'tsum2',
     'tsum3',
     'tsum3',
+    'tsum4',
     'tsum4',
     'tsum5',
     'tsum5',
@@ -58,12 +60,18 @@ var typeOfPet = [
     'tsum8',
     'tsum8',
     'tsum9',
+    'tsum9',
+    'tsum10',
     'tsum10',
     'tsum10'
 ];
-var massOfPets = [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100];
+var massOfPets = [100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
 var joinerConfig = {
     permitedJoinerDistance: 128 / 2 / 2,
-    radiusCanClickedFromCenterPet: 50,
+    radiusCanClickedFromCenterPet: 128/3,
     offsetAngle: 10 //5 degress from path
-}
+};
+var startWithType = 5555;
+var maxCols = 8;
+var originalHorz = 100;
+var pettile = 100;

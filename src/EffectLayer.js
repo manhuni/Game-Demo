@@ -31,9 +31,63 @@ var EffectLayer = cc.Layer.extend({
         });
 
     },
-    dropPetAnimation: function(pet) {
+    dropPetAnimation: function(pets) {
+        var size = cc.director.getWinSize();
         cc.log('Phan animation khi nguoi dung noi duoc 3 pet =))')
-        cc.log('Xu ly cai nay nhe', pet);
+        cc.log('Xu ly cai nay nhe uni =)) ', pets);
+        //request them 3 pet moi khi da delete di 3 pet luc vua nay
+        var cols = pets.length;
+        var rows = 0;
+        cols%maxCols!=0? rows = 1 : rows = cols/maxCols;
+        var additionalPet = [];
+        //loaded first to add after delete =))
+        for (var i = 0; i < rows; i++) {
+            for (var j = 0; j < pets.length; j++) {
+                var type = pets[j]["target"].collision_type;
+                var verticalPos = size.height/2 + 220;
+                var posArray = this.getRandomPos(rows,cols,verticalPos,originalHorz);
+                var pos = posArray[Math.floor(Math.random() * (posArray.length-1 - 0 + 1)) + 0];
+                additionalPet.push(this.getParent().createPetObject(i, j, type,verticalPos,originalHorz,pos));
+            }
+        };
+        //delete pets that color matched here
+        for(var i = 0; i<pets.length; i++){
+            //parent
+            var parentTarget = pets[i]["target"].getParent();
+            //child
+            var childTarget = pets[i]["target"];
+            var childBody = pets[i]["target"].body;
+            var shapes = pets[i]["target"].body.shapeList;
+            //delete
+            var tmpShape = [];
+            for(var j = 0; j <shapes.length; j++){
+                tmpShape.push(shapes[j]);
+            }
+            for(var k = 0; k < tmpShape.length; k ++){
+                parentTarget.space.removeShape(tmpShape[k]);
+            };
+            parentTarget.space.removeBody(childBody);
+            parentTarget.removeChild(childTarget, true);
+        };
+        //request main layer push more pets with attributes stored at additionalPet array;
+        for(var i = 0; i< additionalPet.length; i++){
+            this.getParent().createPhysicEntity(additionalPet[i]);
+        };
+
+    },
+    getRandomPos: function(rows, cols, verticalPos,originalHorz){
+        var pos = [];
+        for(var i = 0;i<rows; i++ ){
+            for(var j = 0; j<maxCols; j++){
+
+                var x = originalHorz + pettile * j;
+                var y = verticalPos + pettile * i;
+
+                pos.push(cc.p(x,y));
+            }
+        }
+        return pos;
+
     },
     update: function(dt) {
         var _this = this

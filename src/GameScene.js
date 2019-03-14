@@ -5,9 +5,15 @@ var GameLayer = cc.Layer.extend({
     _effectNode: null,
     _allOfPets: [],
     _testMode: false,
+    _commontype: startWithType,
     _shuffle: {
         _stepShuffle: 6.1,
         _timesShuffle: 0,
+        _timesShuffleMax: 10,
+        _maxForce: 20,
+        _startForce: 2,
+        _firstRotate: true,
+        _endRotate: false,
         _rotary: []
     },
     ctor: function() {
@@ -38,49 +44,22 @@ var GameLayer = cc.Layer.extend({
         //org: size.height/2;
         //pettile: 50px
 
-        var rows = 6;
-        var cols = 6;
-        var totalPet = rows * cols;
-        var pettile = 70;
-        var commontype = 4444;
-        var originalVertical = size.height / 2;
-        var originalHorizontal = 50;
-        cc.spriteFrameCache.addSpriteFrames(res.TSUM_PLIST, res.TSUM_PNG);
-        var myAllPets = [];
+        var rows = 5;
+        var cols = maxCols;
+        //
+        var Pets = [];
         for (var i = 0; i < rows; i++) {
             for (var j = 0; j < cols; j++) {
-                var x = originalHorizontal + 50 + pettile * j;
-                var y = originalVertical + 30 + pettile * i;
-                var position = cc.p(x, y);
-                //Math.floor(Math.random() * (max - min + 1)) + min;
-                var resourcePet = typeOfPet[Math.floor(Math.random() * ((typeOfPet.length - 1) - 0 + 1)) + 0];
-                var image = `${resourcePet}.png`;
-                var json = `res/tsum/${resourcePet}.json`;
-                var type = commontype++;
-                var mass = massOfPets[i];
-                var scale = 1.0;
-                var colorType = resourcePet;
-                var style = "dinamic";
-                myAllPets.push({
-                    position: position,
-                    image: image,
-                    json: json,
-                    type: type,
-                    mass: mass,
-                    scale: scale,
-                    style: style,
-                    colorType: colorType
-
-                })
+                var pet = this.createPetObject(i, j, null,size.height/2,originalHorz,null);
+                Pets.push(pet);
             }
         };
-
         //create a entity and need return some body and shape, sprite
         //add game play bounder
         this.createStaticEntity(bounderGame);
         //add pet
-        for (var i = 0; i < myAllPets.length; i++) {
-            this.createPhysicEntity(myAllPets[i]);
+        for (var i = 0; i < Pets.length; i++) {
+            this.createPhysicEntity(Pets[i]);
         }
         //listen mouse event click on gameLayer
         cc.eventManager.addListener(petListener, this);
@@ -99,12 +78,12 @@ var GameLayer = cc.Layer.extend({
         var menuItemShuffle = cc.MenuItemSprite.create(norShuffle, selShuffle, this.shuffleAllPhysics, this);
 
         var menu = cc.Menu.create(menuItemShuffle);
-        menu.setPosition(size.width - 100, 170);
+        menu.setPosition(size.width - 50, 75);
         this.addChild(menu, gameConfig.INDEX.SHUFFLE_INDEX);
         //create inner background
-        // var sprite = cc.Sprite.create(res.gameBackground_inner);
-        // sprite.setPosition(cc.p(size.width / 2, size.height / 2));
-        // this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
+        var sprite = cc.Sprite.create(res.gameBackground_inner);
+        sprite.setPosition(cc.p(size.width / 2, size.height / 2));
+        this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
     },
     initPhysicsWorld: function() {
 
@@ -131,46 +110,67 @@ var GameLayer = cc.Layer.extend({
     shuffleAllPhysics: function() {
         // cc.log("Before");
         // cc.log(this.space.constraints);
-        // var _this = this;
-        // var maxForce = 15.00;
-        // this._shuffle._timesShuffle++;
-        // if (this._shuffle._timesShuffle < 10) {
+        var _this = this;
+        this._shuffle._timesShuffle++;
 
-        //     for (var i = 0; i < this._children.length; i++) {
-        //         if (_this._children[i].gameGroup != 0) {
-        //             continue;
-        //         } else {
-        //             var rate = _this._children[i].body.a + _this._shuffle._stepShuffle;
-        //             rate > maxForce ? rate = maxForce : rate = rate;
-        //             var physicsSprite = _this._children[i];
-        //             var body = physicsSprite.body;
-        //             var motor = new cp.SimpleMotor(_this.space.staticBody, body, rate);
+        if (this._shuffle._firstRotate) {
+            this._shuffle._firstRotate = false
+            for (var i = 0; i < this._children.length; i++) {
+                if (_this._children[i].gameGroup != 0) {
+                    continue;
+                } else {
 
-        //             _this.space.addConstraint(motor);
+                    var physicsSprite = _this._children[i];
+                    var body = physicsSprite.body;
 
-        //             _this._shuffle._rotary.push({
-        //                 target: body,
-        //                 constraint: motor,
-        //             });
-        //             _this._shuffle._stepShuffle++;
+                    var motor = new cp.SimpleMotor(_this.space.staticBody, body, _this._shuffle._startForce);
 
-        //         }
-        //     };
-        // } else {
-        //     // cc.log("Haha",_this._shuffle._rotary)
-        //     // for (var i = 0; i < _this._shuffle._rotary.length; i++) {
+                    _this.space.addConstraint(motor);
+                    _this._shuffle._rotary.push({
+                        target: body,
+                        constraint: motor,
+                    });
 
-        //     //     _this.space.removeConstraint(_this._shuffle._rotary[i].constraint); 
-        //     //     cc.log("Hu",i)
-        //     // }; 
+                }
+            };
+        } else {
+            _this._shuffle._startForce = _this._shuffle._startForce + 3;
+            cc.log("start", _this._shuffle._startForce)
 
-        // }
+            if (_this._shuffle._startForce < _this._shuffle._maxForce) {
+                cc.log("Oh");
+                // // // cc.log("Haha",_this._shuffle._rotary)
+                for (var i = 0; i < _this._shuffle._rotary.length; i++) {
+                    // _this.space.removeConstraint(_this._shuffle._rotary[i].constraint); 
+                    _this._shuffle._rotary[i].constraint.rate = _this._shuffle._startForce;
+                    cc.log("Hu", _this._shuffle._startForce)
+                };
+            };
+        }
+        if (this._shuffle._timesShuffle > this._shuffle._timesShuffleMax) {
+            for (var i = 0; i < _this._shuffle._rotary.length; i++) {
+                _this.space.removeConstraint(_this._shuffle._rotary[i]["constraint"]);
+                _this._shuffle._rotary[i]["target"].constraintList = null;
 
-        // setTimeout(function() {
-        //     for (var i = 0; i < _this.space.constraints.length; i++) {
-        //         _this.space.removeConstraint(_this.space.constraints[i]);
-        //     };
-        // }, 5000);
+            };
+            _this._shuffle._firstRotate = true;
+            _this._shuffle._startForce = 2;
+            _this._shuffle._timesShuffle = 0;
+            _this._shuffle._rotary = [];
+
+        };
+
+        setTimeout(function() {
+            for (var i = 0; i < _this._shuffle._rotary.length; i++) {
+                _this.space.removeConstraint(_this._shuffle._rotary[i]["constraint"]);
+                _this._shuffle._rotary[i]["target"].constraintList = null;
+            };
+            _this._shuffle._firstRotate = true;
+            _this._shuffle._startForce = 2;
+            _this._shuffle._timesShuffle = 0;
+            _this._shuffle._rotary = [];
+
+        }, 3000);
     },
     showPhysicWorld: function(visiable) {
         //add debug for node
@@ -211,8 +211,8 @@ var GameLayer = cc.Layer.extend({
                     vertices.push(PBE_offsetX + PBE_scaleCoordinate * PBE_polygons[i][j].x, PBE_offsetY + PBE_scaleCoordinate * PBE_polygons[i][j].y)
                 }
                 var polyShapeChip = new cp.PolyShape(body, vertices, cp.vzero);
-                polyShapeChip.setElasticity(0);
-                polyShapeChip.setFriction(0.5);
+                polyShapeChip.setElasticity(0.1);
+                polyShapeChip.setFriction(10);
                 polyShapeChip.surface_v = cp.vzero;
                 polyShapeChip.setCollisionType(object.type);
                 polyShapeChip.group = object.type;
@@ -234,6 +234,7 @@ var GameLayer = cc.Layer.extend({
     },
     createPhysicEntity: function(object) {
         //1. create a sprite
+        cc.log(object.image);
         var sprite = new PetSprite(object.image);
         sprite.scale = object.scale;
         sprite.colorType = object.colorType;
@@ -244,6 +245,7 @@ var GameLayer = cc.Layer.extend({
         //2. create a body
         var body = new cp.Body(object.mass, cp.momentForBox(object.mass, sprite.getBoundingBox().width, sprite.getBoundingBox().height));
         body.setPos(object.position);
+        body.v_limit = 500;
         this.space.addBody(body);
         sprite.setBody(body);
         this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
@@ -270,10 +272,11 @@ var GameLayer = cc.Layer.extend({
                 var polyShapeChip = new cp.PolyShape(body, vertices, cp.vzero);
                 polyShapeChip.setElasticity(0);
                 polyShapeChip.setFriction(10);
-                // polyShapeChip.surface_v = cp.vzero;
-                // polyShapeChip.surface_vr = cp.vzero;
+                polyShapeChip.surface_v = cp.vzero;
+                polyShapeChip.surface_vr = cp.vzero;
                 polyShapeChip.setCollisionType(object.type);
                 polyShapeChip.group = object.type;
+
                 _this.space.addShape(polyShapeChip);
                 shapeGroup[i].push(polyShapeChip);
             }
@@ -287,7 +290,7 @@ var GameLayer = cc.Layer.extend({
             sprite: sprite,
             shape: shapeGroup,
             body: body
-        })
+        });
     },
     loadAllVerticesFromJson: function(json) {
         return new Promise(function(resolve, reject) {
@@ -352,7 +355,7 @@ var petListener = cc.EventListener.create({
                         joiner: null
                     })
                     // //Magnify target pet(effect ... )
-                // target._effectNode.glowUpPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
+                    // target._effectNode.glowUpPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
                 return true;
             }
         }
@@ -392,11 +395,11 @@ var petListener = cc.EventListener.create({
 
         if (distanceRuntime > originRange && distanceRuntime < totalRange) {
             // Now time for play this will determine draw or not
-            if(target._effectNode.petEffected.length >= 2){
-                var alreadyJoinPet = target.findPetHaveAlreadyJoin(target,touch.getLocation(),target._effectNode.petEffected);
+            if (target._effectNode.petEffected.length >= 2) {
+                var alreadyJoinPet = target.findPetHaveAlreadyJoin(target, touch.getLocation(), target._effectNode.petEffected);
             }
             var nearestPoint = target.findNearestPosition(lastTarget, touch.getLocation(), petNoneVisted);
-            
+
 
             if (nearestPoint != -1) {
                 cc.log("nearestPoint", petNoneVisted[nearestPoint].colorType);
@@ -439,12 +442,12 @@ var petListener = cc.EventListener.create({
 
                             // add all into one
                             target._effectNode.petEffected.push({
-                                target: petNoneVisted[nearestPoint],
-                                fireAnimation: fireAnimation,
-                                joiner: joinerSprite
-                            })
-                            // target._effectNode.glowDownPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 2]['target']);
-                            // target._effectNode.glowUpPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
+                                    target: petNoneVisted[nearestPoint],
+                                    fireAnimation: fireAnimation,
+                                    joiner: joinerSprite
+                                })
+                                // target._effectNode.glowDownPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 2]['target']);
+                                // target._effectNode.glowUpPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
 
                         }
                     }).catch(function(error) {
@@ -535,17 +538,51 @@ GameLayer.prototype.findPetUnderPath = function(inrangeRadiusArray, lastTarget, 
     })
 
 };
-GameLayer.prototype.findPetHaveAlreadyJoin = function(target,touchPosition,arrayVisitedPet){
-    var lastTarget = arrayVisitedPet[arrayVisitedPet.length-1]["target"];
-    var previousTargetPos = arrayVisitedPet[arrayVisitedPet.length-2]["target"].getPosition();
-    var distanceLastPrePet = cc.pDistance(touchPosition,previousTargetPos);
+GameLayer.prototype.findPetHaveAlreadyJoin = function(target, touchPosition, arrayVisitedPet) {
+    var lastTarget = arrayVisitedPet[arrayVisitedPet.length - 1]["target"];
+    var previousTargetPos = arrayVisitedPet[arrayVisitedPet.length - 2]["target"].getPosition();
+    var distanceLastPrePet = cc.pDistance(touchPosition, previousTargetPos);
     //remove this joiner
-    if(distanceLastPrePet < joinerConfig.permitedJoinerDistance){
-        target._effectNode.removeChild(arrayVisitedPet[arrayVisitedPet.length-1]["joiner"],true);
-        target._effectNode.removeChild(arrayVisitedPet[arrayVisitedPet.length-1]["fireAnimation"],true);
+    if (distanceLastPrePet < joinerConfig.permitedJoinerDistance) {
+        target._effectNode.removeChild(arrayVisitedPet[arrayVisitedPet.length - 1]["joiner"], true);
+        target._effectNode.removeChild(arrayVisitedPet[arrayVisitedPet.length - 1]["fireAnimation"], true);
         target._effectNode._counterSegment = target._effectNode._counterSegment - 1;
         //reset lastTarget
         lastTarget.isVisited = false;
-        target._effectNode.petEffected.splice(arrayVisitedPet.length-1,1);
+        target._effectNode.petEffected.splice(arrayVisitedPet.length - 1, 1);
     };
-}
+};
+GameLayer.prototype.createPetObject = function(rows, cols, typepet,originalVertical,originalHorizontal,pos) {
+
+    var size = cc.director.getWinSize();
+    var originalVertical = originalVertical;
+    var originalHorizontal = originalHorizontal;
+
+
+    var x = originalHorizontal + pettile * cols;
+    var y = originalVertical + pettile * rows;
+
+    var position = pos!=null? pos : cc.p(x, y);
+    //Math.floor(Math.random() * (max - min + 1)) + min;
+    var resourcePet = typeOfPet[Math.floor(Math.random() * ((typeOfPet.length - 1) - 0 + 1)) + 0];
+
+    var image = `${resourcePet}.png`;
+    var json = `res/tsum/${resourcePet}.json`;
+    var type = typepet == null ? this._commontype++ : typepet;
+
+    var mass = massOfPets[cols];
+    var scale = 1.0;
+    var colorType = resourcePet;
+    var style = "dinamic";
+    return {
+        position: position,
+        image: image,
+        json: json,
+        type: type,
+        mass: mass,
+        scale: scale,
+        style: style,
+        colorType: colorType
+
+    };
+};

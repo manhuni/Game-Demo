@@ -465,7 +465,7 @@ var petListener = cc.EventListener.create({
         var target = event.getCurrentTarget();
         // phai reset lai all target
         // o day can xet xem do dai cua doi tuong co dam bao lon hon 2 hay khong
-        if (target._effectNode.petEffected.length > 2) {
+        if (target._effectNode.petEffected.length >= 2) {
             target._effectNode.dropPetAnimation(target._effectNode.petEffected);
         }
         for (var i = 0; i < target._effectNode.petEffected.length; i++) {

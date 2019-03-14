@@ -47,25 +47,26 @@ var typeOfPet = [
     'tsum0',
     'tsum1',
     'tsum2',
-    'tsum2',
-    'tsum2',
     'tsum3',
     'tsum3',
     'tsum4',
-    'tsum4',
-    'tsum5',
     'tsum5',
     'tsum6',
     'tsum7',
     'tsum8',
+    'tsum9',
+    'tsum10',
+    'tsum10',
     'tsum8',
     'tsum9',
-    'tsum9',
-    'tsum10',
-    'tsum10',
-    'tsum10'
+    'tsum6',
+    'tsum5',
+    'tsum4',
+    'tsum3',
+    'tsum2'
 ];
-var massOfPets = [100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
+var massOfPets = [100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200,
+210,220,230,240,250,260,270,280,300,310,320,330,340,350,360];
 var joinerConfig = {
     permitedJoinerDistance: 128 / 2 / 2,
     radiusCanClickedFromCenterPet: 128/3,

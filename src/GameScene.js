@@ -1,21 +1,12 @@
 var GameLayer = cc.Layer.extend({
     space: null, //contain all physic
     _debugNode: null, //show element physics
-    _showDebugger: false,
+    _showDebugger: true,
     _effectNode: null,
     _allOfPets: [],
     _testMode: false,
     _commontype: startWithType,
-    _shuffle: {
-        _stepShuffle: 6.1,
-        _timesShuffle: 0,
-        _timesShuffleMax: 10,
-        _maxForce: 20,
-        _startForce: 2,
-        _firstRotate: true,
-        _endRotate: false,
-        _rotary: []
-    },
+    _shuffle: shuffleObj,
     ctor: function() {
         this._super();
         this.init();
@@ -50,7 +41,7 @@ var GameLayer = cc.Layer.extend({
         var Pets = [];
         for (var i = 0; i < rows; i++) {
             for (var j = 0; j < cols; j++) {
-                var pet = this.createPetObject(i, j, null,size.height/2,originalHorz,null);
+                var pet = this.createPetObject(i, j, null, size.height / 2, originalHorz, null);
                 Pets.push(pet);
             }
         };
@@ -234,7 +225,6 @@ var GameLayer = cc.Layer.extend({
     },
     createPhysicEntity: function(object) {
         //1. create a sprite
-        cc.log(object.image);
         var sprite = new PetSprite(object.image);
         sprite.scale = object.scale;
         sprite.colorType = object.colorType;
@@ -346,8 +336,6 @@ var petListener = cc.EventListener.create({
                 var fireAnimation = target._effectNode.addFireAnim(petObject[i]);
                 petObject[i].isVisited = true;
 
-                // firstPoint = petObject[i].getPosition();
-                // tempWidth = petObject[i].getBoundingBox();
                 // //Group all component of pet(fire, join, it'self to control(delete, point, ...))
                 target._effectNode.petEffected.push({
                         target: petObject[i],
@@ -402,58 +390,51 @@ var petListener = cc.EventListener.create({
 
 
             if (nearestPoint != -1) {
-                cc.log("nearestPoint", petNoneVisted[nearestPoint].colorType);
                 if (petNoneVisted[nearestPoint].colorType == lastTarget.colorType) {
                     //if same color then permit join but must check
                     //have any pet cross this path joiner
                     var radiusScan = cc.pDistance(lastTarget.getPosition(), petNoneVisted[nearestPoint].getPosition());
                     var inrangeRadiusArray = target.findInrangePet(radiusScan, lastTarget, petNoneVisted);
                     //check in this path have any pet under
-                    target.findPetUnderPath(inrangeRadiusArray, lastTarget, petNoneVisted[nearestPoint]).then(function(data) {
-                        var isPetUnderPathObj = data;
-                        cc.log("Data ne", isPetUnderPathObj)
-                        if (isPetUnderPathObj.isPetUnder != false) {
-                            cc.log("Biet dau, noi di chu")
-                            petNoneVisted[nearestPoint].isVisited = true;
-                            // First we will blow up that sprite
-                            target._effectNode._counterSegment = target._effectNode._counterSegment + 1;
+                    var isPetUnderPathObj = target.findPetUnderPath(inrangeRadiusArray, lastTarget, petNoneVisted[nearestPoint]);
 
-                            var angle = isPetUnderPathObj.angle;
-                            // define a new segment
-                            var joinerSprite = cc.Sprite.create(res.Joiner_PNG);
-                            joinerSprite.attr({
-                                    x: lastTarget.getPosition().x,
-                                    y: lastTarget.getPosition().y,
-                                    anchorX: 0,
-                                    anchorY: 0.5,
-                                    scaleY: gameConfig.SCALE.JOINER_FIXED_SCALEY,
-                                    scaleX: scaleRatioX,
-                                    rotation: angle
-                                })
-                                // TINH KHOANG CACH TU POSA -> POSB DE DIEU CHINH SCALE PHU HOP
-                            var disScaleRelative = cc.pDistance(lastTarget.getPosition(), petNoneVisted[nearestPoint].getPosition());
-                            var widthOfJoiner = joinerSprite.width * gameConfig.SCALE.JOINER_FIXED_SCALEX; // pixel
-                            var scaleRatioX = disScaleRelative * gameConfig.SCALE.JOINER_FIXED_SCALEX / widthOfJoiner;
-                            joinerSprite.scaleX = scaleRatioX;
+                    if (isPetUnderPathObj.isPetUnder != false) {
+                        petNoneVisted[nearestPoint].isVisited = true;
+                        // First we will blow up that sprite
+                        target._effectNode._counterSegment = target._effectNode._counterSegment + 1;
 
-                            joinerSprite.setTag(gameConfig.TAG.JOIN_ANIM)
-                            target._effectNode.addChild(joinerSprite, gameConfig.INDEX.EFFECTNODE_JOIN_INDEX);
-                            var fireAnimation = target._effectNode.addFireAnim(petNoneVisted[nearestPoint]);
+                        var angle = isPetUnderPathObj.angle;
+                        // define a new segment
+                        var joinerSprite = new cc.Scale9Sprite(res.Joiner_PNG);
+                        joinerSprite.attr({
+                                x: lastTarget.getPosition().x,
+                                y: lastTarget.getPosition().y,
+                                anchorX: 0,
+                                anchorY: 0.5,
+                                scaleY: gameConfig.SCALE.JOINER_FIXED_SCALEY,
+                                scaleX: scaleRatioX,
+                                rotation: angle
+                            })
+                            // TINH KHOANG CACH TU POSA -> POSB DE DIEU CHINH SCALE PHU HOP
+                        var disScaleRelative = cc.pDistance(lastTarget.getPosition(), petNoneVisted[nearestPoint].getPosition());
+                        var widthOfJoiner = joinerSprite.width * gameConfig.SCALE.JOINER_FIXED_SCALEX; // pixel
+                        var scaleRatioX = disScaleRelative * gameConfig.SCALE.JOINER_FIXED_SCALEX / widthOfJoiner;
+                        joinerSprite.scaleX = scaleRatioX;
 
-                            // add all into one
-                            target._effectNode.petEffected.push({
-                                    target: petNoneVisted[nearestPoint],
-                                    fireAnimation: fireAnimation,
-                                    joiner: joinerSprite
-                                })
-                                // target._effectNode.glowDownPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 2]['target']);
-                                // target._effectNode.glowUpPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
+                        joinerSprite.setTag(gameConfig.TAG.JOIN_ANIM)
+                        target._effectNode.addChild(joinerSprite, gameConfig.INDEX.EFFECTNODE_JOIN_INDEX);
+                        var fireAnimation = target._effectNode.addFireAnim(petNoneVisted[nearestPoint]);
 
-                        }
-                    }).catch(function(error) {
-                        cc.log("We are meeting an error, please check carefully ...");
-                        cc.log(error);
-                    });
+                        // add all into one
+                        target._effectNode.petEffected.push({
+                                target: petNoneVisted[nearestPoint],
+                                fireAnimation: fireAnimation,
+                                joiner: joinerSprite
+                            })
+                            // target._effectNode.glowDownPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 2]['target']);
+                            // target._effectNode.glowUpPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
+
+                    }
 
                 }
             }
@@ -478,7 +459,8 @@ var petListener = cc.EventListener.create({
         target._effectNode.petEffected = [];
         target._effectNode._counterSegment = 0;
         //un register/remove all handle listenner
-        return false
+
+        return false;
     }
 });
 
@@ -504,38 +486,32 @@ GameLayer.prototype.findInrangePet = function(range, lastTarget, arrayPets) {
 };
 GameLayer.prototype.findPetUnderPath = function(inrangeRadiusArray, lastTarget, nearestTarget) {
 
-    return new Promise(function(resolve, reject) {
-        var originPos = lastTarget.getPosition();
-        var destinationPos = nearestTarget.getPosition();
+    var originPos = lastTarget.getPosition();
+    var destinationPos = nearestTarget.getPosition();
 
-        var angleOrgToDest = cc.radiansToDegrees(Math.atan2(destinationPos.y - originPos.y, destinationPos.x - originPos.x));
-        var petUnderPath = [];
-        var isPetUnder = null;
-        //
-        cc.log(inrangeRadiusArray)
+    var angleOrgToDest = cc.radiansToDegrees(Math.atan2(destinationPos.y - originPos.y, destinationPos.x - originPos.x));
+    var petUnderPath = [];
+    var isPetUnder = null;
+    //
+    for (var i = 0; i < inrangeRadiusArray.length; i++) {
 
-        for (var i = 0; i < inrangeRadiusArray.length; i++) {
+        var inRadiusPetPos = inrangeRadiusArray[i].getPosition();
+        var angleOrgToInradius = cc.radiansToDegrees(Math.atan2(inRadiusPetPos.y - originPos.y, inRadiusPetPos.x - originPos.x));
 
-            var inRadiusPetPos = inrangeRadiusArray[i].getPosition();
-            var angleOrgToInradius = cc.radiansToDegrees(Math.atan2(inRadiusPetPos.y - originPos.y, inRadiusPetPos.x - originPos.x));
-
-            if ((angleOrgToInradius > (angleOrgToDest - joinerConfig.offsetAngle)) && (angleOrgToInradius < (angleOrgToDest + joinerConfig.offsetAngle))) {
-                cc.log("We don't permit you join this destination pet ...");
-                cc.log("Angle org ...", angleOrgToInradius);
-                cc.log("Angle ...", angleOrgToDest);
-                isPetUnder = false;
-                break;
-            } else {
-                isPetUnder = true;
-            };
-
+        if ((angleOrgToInradius > (angleOrgToDest - joinerConfig.offsetAngle)) && (angleOrgToInradius < (angleOrgToDest + joinerConfig.offsetAngle))) {
+            cc.log("We don't permit you join this destination pet ...");
+            isPetUnder = false;
+            break;
+        } else {
+            isPetUnder = true;
         };
-        cc.log("We are checking, please wait a moment ...");
-        resolve({
-            isPetUnder: isPetUnder,
-            angle: angleOrgToDest
-        });
-    })
+
+    };
+    cc.log("We are checking, please wait a moment ...");
+    return {
+        isPetUnder: isPetUnder,
+        angle: angleOrgToDest
+    }
 
 };
 GameLayer.prototype.findPetHaveAlreadyJoin = function(target, touchPosition, arrayVisitedPet) {
@@ -552,7 +528,7 @@ GameLayer.prototype.findPetHaveAlreadyJoin = function(target, touchPosition, arr
         target._effectNode.petEffected.splice(arrayVisitedPet.length - 1, 1);
     };
 };
-GameLayer.prototype.createPetObject = function(rows, cols, typepet,originalVertical,originalHorizontal,pos) {
+GameLayer.prototype.createPetObject = function(rows, cols, typepet, originalVertical, originalHorizontal, pos) {
 
     var size = cc.director.getWinSize();
     var originalVertical = originalVertical;
@@ -562,7 +538,7 @@ GameLayer.prototype.createPetObject = function(rows, cols, typepet,originalVerti
     var x = originalHorizontal + pettile * cols;
     var y = originalVertical + pettile * rows;
 
-    var position = pos!=null? pos : cc.p(x, y);
+    var position = pos != null ? pos : cc.p(x, y);
     //Math.floor(Math.random() * (max - min + 1)) + min;
     var resourcePet = typeOfPet[Math.floor(Math.random() * ((typeOfPet.length - 1) - 0 + 1)) + 0];
 

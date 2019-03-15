@@ -48,7 +48,6 @@ var typeOfPet = [
     'tsum1',
     'tsum2',
     'tsum3',
-    'tsum3',
     'tsum4',
     'tsum5',
     'tsum6',
@@ -57,22 +56,35 @@ var typeOfPet = [
     'tsum9',
     'tsum10',
     'tsum10',
-    'tsum8',
-    'tsum9',
-    'tsum6',
-    'tsum5',
-    'tsum4',
-    'tsum3',
-    'tsum2'
+    'tsum10',
+    'tsum10',
+    'tsum10',
+    'tsum10',
+    'tsum10',
+    'tsum10',
+    'tsum10',
+    'tsum10'
 ];
 var massOfPets = [100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200,
-210,220,230,240,250,260,270,280,300,310,320,330,340,350,360];
+    210, 220, 230, 240, 250, 260, 270, 280, 300, 310, 320, 330, 340, 350, 360
+];
 var joinerConfig = {
     permitedJoinerDistance: 128 / 2 / 2,
-    radiusCanClickedFromCenterPet: 128/3,
+    radiusCanClickedFromCenterPet: 128 / 3,
     offsetAngle: 10 //5 degress from path
 };
 var startWithType = 5555;
-var maxCols = 8;
+var maxCols = 7;
 var originalHorz = 100;
-var pettile = 100;
+
+var pettile = 120;
+var shuffleObj = {
+    _stepShuffle: 6.1,
+    _timesShuffle: 0,
+    _timesShuffleMax: 10,
+    _maxForce: 20,
+    _startForce: 2,
+    _firstRotate: true,
+    _endRotate: false,
+    _rotary: []
+}

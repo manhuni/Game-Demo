@@ -33,25 +33,9 @@ var EffectLayer = cc.Layer.extend({
     },
     dropPetAnimation: function(pets) {
         var size = cc.director.getWinSize();
-        cc.log('Phan animation khi nguoi dung noi duoc 3 pet =))')
-        cc.log('Xu ly cai nay nhe uni =)) ', pets);
-        //request them 3 pet moi khi da delete di 3 pet luc vua nay
-        var cols = pets.length;
-        var rows = 0;
-        cols%maxCols!=0? rows = 1 : rows = cols/maxCols;
-        var additionalPet = [];
-        //loaded first to add after delete =))
-        for (var i = 0; i < rows; i++) {
-            for (var j = 0; j < pets.length; j++) {
-                var type = pets[j]["target"].collision_type;
-                var verticalPos = size.height/2 + 220;
-                var posArray = this.getRandomPos(rows,cols,verticalPos,originalHorz);
-                var pos = posArray[Math.floor(Math.random() * (posArray.length-1 - 0 + 1)) + 0];
-                additionalPet.push(this.getParent().createPetObject(i, j, type,verticalPos,originalHorz,pos));
-            }
-        };
-        //delete pets that color matched here
-        for(var i = 0; i<pets.length; i++){
+        
+        //remove target joined
+        for (var i = 0; i < pets.length; i++) {
             //parent
             var parentTarget = pets[i]["target"].getParent();
             //child
@@ -60,32 +44,67 @@ var EffectLayer = cc.Layer.extend({
             var shapes = pets[i]["target"].body.shapeList;
             //delete
             var tmpShape = [];
-            for(var j = 0; j <shapes.length; j++){
+            for (var j = 0; j < shapes.length; j++) {
                 tmpShape.push(shapes[j]);
             }
-            for(var k = 0; k < tmpShape.length; k ++){
+            for (var k = 0; k < tmpShape.length; k++) {
                 parentTarget.space.removeShape(tmpShape[k]);
             };
             parentTarget.space.removeBody(childBody);
             parentTarget.removeChild(childTarget, true);
         };
-        //request main layer push more pets with attributes stored at additionalPet array;
-        for(var i = 0; i< additionalPet.length; i++){
+        // create pet data object to add
+        var petGroupSize = maxCols;
+        var petGroup = [];
+        do{
+            petGroup.push(pets.splice(0,petGroupSize));
+        }while(pets.length);
+        //create a data for new pet
+
+        var additionalPet = [];
+        var petLoaded = [];
+
+        var verticalPos = size.height/2 + 220;
+        var rows = petGroup.length;
+        var cols = maxCols;
+        
+        var posArray = this.getRandomPos(rows,cols,verticalPos,originalHorz);
+
+        for(var i = 0; i<petGroup.length;i++){
+            petLoaded[i] = [];
+
+            for(var j = 0; j<petGroup[i].length; j++){
+                var type = petGroup[i][j]["target"].collision_type;
+                var index = Math.floor(Math.random() * (posArray[i].length-1 - 0 + 1)) + 0;
+                if(petLoaded[i].includes(index)){
+                    index = this.findOtherPosition(index,posArray[i],petLoaded[i]);
+                }
+                var pos = posArray[i][index];
+
+                additionalPet.push(this.getParent().createPetObject(i, j, type,verticalPos,originalHorz,pos));
+                petLoaded[i].push(index);
+            }
+        }
+        //
+
+        // request main layer push more pets with attributes stored at additionalPet array;
+        for (var i = 0; i < additionalPet.length; i++) {
             this.getParent().createPhysicEntity(additionalPet[i]);
         };
 
     },
-    getRandomPos: function(rows, cols, verticalPos,originalHorz){
+    getRandomPos: function(rows, cols, verticalPos, originalHorz) {
         var pos = [];
-        for(var i = 0;i<rows; i++ ){
-            for(var j = 0; j<maxCols; j++){
+        var x,y;
+        for (var i = 0; i < rows; i++) {
+            pos[i] = [];
+            for (var j = 0; j < cols; j++) {
+                x = originalHorz + pettile * j;
+                y = verticalPos + pettile * i;
 
-                var x = originalHorz + pettile * j;
-                var y = verticalPos + pettile * i;
-
-                pos.push(cc.p(x,y));
+                pos[i].push(cc.p(x, y));
             }
-        }
+        };
         return pos;
 
     },
@@ -117,4 +136,16 @@ var EffectLayer = cc.Layer.extend({
             }
         }
     }
-})
+});
+EffectLayer.prototype.findOtherPosition = function(index, posArray, petLoadedArray) {
+    var minLimit = 0;
+    var maxLimit = posArray.length - 1;
+    var randomIndex = 0;
+    var avaiableIndex = false;
+    do {
+        randomIndex = Math.floor(Math.random() * (maxLimit - minLimit + 1)) + minLimit;
+        avaiableIndex = petLoadedArray.includes(randomIndex);
+    }
+    while (randomIndex == index || avaiableIndex);
+    return randomIndex;
+}

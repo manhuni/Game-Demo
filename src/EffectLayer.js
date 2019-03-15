@@ -127,7 +127,7 @@ var EffectLayer = cc.Layer.extend({
                         y: _this.petEffected[i]['target'].getPosition().y,
                         anchorX: 0,
                         anchorY: 0.5,
-                        scaleY: gameConfig.SCALE.JOINER_FIXED_SCALEY,
+                        // scaleY: gameConfig.SCALE.JOINER_FIXED_SCALEY,
                         scaleX: scaleRatioX,
                         rotation: cc.radiansToDegrees(Math.atan2(-(_this.petEffected[i + 1]['target'].getPosition().y - _this.petEffected[i]['target'].getPosition().y),
                             _this.petEffected[i + 1]['target'].getPosition().x - _this.petEffected[i]['target'].getPosition().x))

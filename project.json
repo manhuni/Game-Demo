@@ -17,7 +17,9 @@
         "src/app.js",
         "src/GameScene.js",
         "src/PetsSprite.js",
+        "src/JoinerSprite.js",
         "src/FireSprite.js",
+        "src/PetAnimationSprite.js",
         "src/EffectLayer.js"
     ]
 }

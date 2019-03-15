@@ -7,7 +7,7 @@ var FireSprite = cc.Sprite.extend({
         this.initWithSpriteFrameName("fire0.png");
         //Create SpriteFrame and AnimationFrame with Frame Data
         var animFrames = [];
-        for (var i = 0; i < 3; i++) {
+        for (var i = 0; i < 4; i++) {
             var str = "fire" + i + ".png";
             var spriteFrame = cc.spriteFrameCache.getSpriteFrame(str);
             animFrames.push(spriteFrame);

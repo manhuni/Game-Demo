@@ -1,7 +1,7 @@
 var GameLayer = cc.Layer.extend({
     space: null, //contain all physic
     _debugNode: null, //show element physics
-    _showDebugger: true,
+    _showDebugger: false,
     _effectNode: null,
     _allOfPets: [],
     _testMode: false,
@@ -35,18 +35,19 @@ var GameLayer = cc.Layer.extend({
         //org: size.height/2;
         //pettile: 50px
 
-        var rows = 5;
+        var rows = 7;
         var cols = maxCols;
         //
         var Pets = [];
         for (var i = 0; i < rows; i++) {
             for (var j = 0; j < cols; j++) {
-                var pet = this.createPetObject(i, j, null, size.height / 2, originalHorz, null);
+                var pet = this.createPetObject(i, j, null, size.height / 2 - 300, originalHorz, null);
                 Pets.push(pet);
             }
         };
-        //create a entity and need return some body and shape, sprite
-        //add game play bounder
+        cc.log(Pets)
+            //create a entity and need return some body and shape, sprite
+            //add game play bounder
         this.createStaticEntity(bounderGame);
         //add pet
         for (var i = 0; i < Pets.length; i++) {
@@ -72,9 +73,17 @@ var GameLayer = cc.Layer.extend({
         menu.setPosition(size.width - 50, 75);
         this.addChild(menu, gameConfig.INDEX.SHUFFLE_INDEX);
         //create inner background
-        var sprite = cc.Sprite.create(res.gameBackground_inner);
-        sprite.setPosition(cc.p(size.width / 2, size.height / 2));
-        this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
+        // var sprite = cc.Sprite.create(res.gameBackground_inner);
+        // sprite.setPosition(cc.p(size.width / 2, size.height / 2));
+        // this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
+        //create a animation effect pet
+        //test
+        var size = cc.director.getWinSize();
+        var myPet = new PetAnimationSprite(res.pet0_PLIST, res.pet0_PNG);
+        myPet.setPosition(cc.p(100, size.height / 2 + 210));
+        this.addChild(myPet, gameConfig.INDEX.ANIMATIONPET_INDEX+1);
+        // end test
+
     },
     initPhysicsWorld: function() {
 
@@ -405,17 +414,23 @@ var petListener = cc.EventListener.create({
 
                         var angle = isPetUnderPathObj.angle;
                         // define a new segment
-                        var joinerSprite = new cc.Scale9Sprite(res.Joiner_PNG);
-                        joinerSprite.attr({
-                                x: lastTarget.getPosition().x,
-                                y: lastTarget.getPosition().y,
-                                anchorX: 0,
-                                anchorY: 0.5,
-                                scaleY: gameConfig.SCALE.JOINER_FIXED_SCALEY,
-                                scaleX: scaleRatioX,
-                                rotation: angle
-                            })
-                            // TINH KHOANG CACH TU POSA -> POSB DE DIEU CHINH SCALE PHU HOP
+                        var beforeJoiner = target._effectNode.petEffected[target._effectNode.petEffected.length - 1]["joiner"];
+                        cc.log(beforeJoiner);
+                        var scaleYUPJ = 0;
+                        beforeJoiner != null ? scaleYUPJ = beforeJoiner.scaleY + 0.07 : scaleYUPJ = gameConfig.SCALE.JOINER_FIXED_SCALEY;
+
+                        var objJoinerProperties = {
+                            x: lastTarget.getPosition().x,
+                            y: lastTarget.getPosition().y,
+                            anchorX: 0,
+                            anchorY: 0.5,
+                            scaleY: scaleYUPJ,
+                            rotation: angle
+                        };
+
+                        var joinerSprite = new JoinerSprite(objJoinerProperties);
+
+                        // TINH KHOANG CACH TU POSA -> POSB DE DIEU CHINH SCALE PHU HOP
                         var disScaleRelative = cc.pDistance(lastTarget.getPosition(), petNoneVisted[nearestPoint].getPosition());
                         var widthOfJoiner = joinerSprite.width * gameConfig.SCALE.JOINER_FIXED_SCALEX; // pixel
                         var scaleRatioX = disScaleRelative * gameConfig.SCALE.JOINER_FIXED_SCALEX / widthOfJoiner;
@@ -423,8 +438,12 @@ var petListener = cc.EventListener.create({
 
                         joinerSprite.setTag(gameConfig.TAG.JOIN_ANIM)
                         target._effectNode.addChild(joinerSprite, gameConfig.INDEX.EFFECTNODE_JOIN_INDEX);
-                        var fireAnimation = target._effectNode.addFireAnim(petNoneVisted[nearestPoint]);
+                        var beforeFire = target._effectNode.petEffected[target._effectNode.petEffected.length - 1]["fireAnimation"];
+                        var scaleYF = beforeFire.scale + 0.1;
 
+
+                        var fireAnimation = target._effectNode.addFireAnim(petNoneVisted[nearestPoint]);
+                        fireAnimation.scale = scaleYF;
                         // add all into one
                         target._effectNode.petEffected.push({
                                 target: petNoneVisted[nearestPoint],
@@ -547,7 +566,7 @@ GameLayer.prototype.createPetObject = function(rows, cols, typepet, originalVert
     var type = typepet == null ? this._commontype++ : typepet;
 
     var mass = massOfPets[cols];
-    var scale = 1.0;
+    var scale = 1.2;
     var colorType = resourcePet;
     var style = "dinamic";
     return {

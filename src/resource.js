@@ -57,15 +57,16 @@ var res = {
 	PET_BLUE_JSON: "res/pets/pets_05.json",
 	PET_ELDER_JSON: "res/pets/pets_06.json",
 	//other (menu, button, ..vv)
-	Play_Button_Nor: "res/button_play_nor.png",
-    Play_Button_Sel: "res/button_play_sel.png",
     Shuffle_Button_Nor: "res/shuffle_nor.png",
     Shuffle_Button_Sel: "res/shuffle_sel.png",
     //joinner
    	Joiner_PNG: "res/joinblock.png",
    	 //fire animation
     Fire_PLIST: "res/fires/fireanim.plist",
-	Fire_PNG: "res/fires/fireanim.png"
+	Fire_PNG: "res/fires/fireanim.png",
+	//pet animation
+	pet0_PLIST: "res/anim/pet0/pet0.plist",
+	pet0_PNG: "res/anim/pet0/pet0.png"
 	
 
     

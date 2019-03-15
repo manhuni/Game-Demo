@@ -8,6 +8,7 @@ var gameConfig = {
         DEBBUGLAYER_INDEX: 5555555555555,
         ANIMATION_INDEX: 6,
         EFFECTNODE_INDEX: 7,
+        ANIMATIONPET_INDEX: 7,
         EFFECTNODE_JOIN_INDEX: 8,
         EFFECTNODE_FIRE_INDEX: 9,
         SEGMENT_LABEL_INDEX: 10,
@@ -25,9 +26,9 @@ var gameConfig = {
     },
     SCALE: {
         JOINER_FIXED_SCALEX: 0.3,
-        JOINER_FIXED_SCALEY: 0.5,
-        FIREANIM_SCALEX: 1,
-        FIREANIM_SCALEY: 1.02
+        JOINER_FIXED_SCALEY: 0.7,
+        FIREANIM_SCALEX: 1.03,
+        FIREANIM_SCALEY: 1.05
     }
 
 
@@ -54,6 +55,18 @@ var typeOfPet = [
     'tsum7',
     'tsum8',
     'tsum9',
+    'tsum10'
+    
+];
+//all test types of pet
+var typeTestOfPet = [
+    'tsum10',
+    'tsum10',
+    'tsum10',
+    'tsum10',
+    'tsum10',
+    'tsum10',
+    'tsum10',
     'tsum10',
     'tsum10',
     'tsum10',
@@ -64,9 +77,11 @@ var typeOfPet = [
     'tsum10',
     'tsum10',
     'tsum10'
+    
 ];
+
 var massOfPets = [100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200,
-    210, 220, 230, 240, 250, 260, 270, 280, 300, 310, 320, 330, 340, 350, 360
+    210, 220, 230, 240, 250, 260, 270, 280, 300, 310, 320, 330, 340, 350, 360, 220, 230, 240, 250, 260, 270, 280, 300, 310, 320, 330, 340, 350, 360, 220, 230, 240, 250, 260, 270, 280, 300, 310, 320, 330, 340, 350, 360, 220, 230, 240, 250, 260, 270, 280, 300, 310, 320, 330, 340, 350, 360
 ];
 var joinerConfig = {
     permitedJoinerDistance: 128 / 2 / 2,

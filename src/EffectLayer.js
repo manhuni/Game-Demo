@@ -51,38 +51,62 @@ var EffectLayer = cc.Layer.extend({
         // gameLayer._allOfPets[0].body.DestroyFixture(gameLayer._allOfPets[0].fixTure)
 
         // create pet data object to add
-        // var petGroupSize = maxCols;
-        // var petGroup = [];
-        // do{
-        //     petGroup.push(pets.splice(0,petGroupSize));
-        // }while(pets.length);
-        // //create a data for new pet
+        var petGroupSize = maxCols;
+        var petGroup = [];
+
+        do{
+            petGroup.push(pets.splice(0,petGroupSize));
+
+        }while(pets.length);
+
+        // create a data for new pet(fresh adding pet)
+        cc.log(petGroup);
+
+        var PetProperties = [];
+        for(var i = 0; i<petGroup.length; i++){
+            PetProperties[i] = [];
+            for(var j = 0; j<petGroup[i].length; j++){
+                // var scale = Math.floor(Math.random() * (1.2 - 0.5 + 1)) + 0.5;
+                var scale = 1.0;
+                var mass = Math.floor(Math.random() * (massOfPets.length-1 - 0 + 1)) + 0;
+                var json = 'random';
+                var style = 'dynamic';
+                var property = gameLayer.createPetObject(mass,scale,json,style);
+                PetProperties[i].push(property);
+            }
+        }
+        //
+        cc.log(PetProperties)
+
+        var startX = 50; var startY = size.height/2+220;
+        var loadedPet = [];
+        //
+        for(var i = 0; i<PetProperties.length; i++){
+
+            loadedPet[i] = [];
+
+            for(var j = 0; j<PetProperties[i].length;j++){
+
+                var pet = PetProperties[i][j].sprite;
+                var s = pet.getBoundingBox();
+                var posArray = gameLayer.createDataPosition(s,startX,startY);
+                var index = Math.floor(Math.random() * (posArray[i].length-1 - 0 + 1)) + 0;
+
+                if(loadedPet[i].includes(index)){
+                    index = findOtherPosition(index,posArray[i],loadedPet[i]);
+                };
+                var pos = posArray[i][index];
+
+                loadedPet[i].push(index);
+                gameLayer.createMultiPolygonEntity(PetProperties[i][j],pos);
+            }
+        }//
+
 
         // var additionalPet = [];
-        // var petLoaded = [];
+        // var loadedPet = [];
 
-        // var verticalPos = size.height/2 + 220;
-        // var rows = petGroup.length;
-        // var cols = maxCols;
 
-        // var posArray = this.getRandomPos(rows,cols,verticalPos,originalHorz);
-
-        // for(var i = 0; i<petGroup.length;i++){
-        //     petLoaded[i] = [];
-
-        //     for(var j = 0; j<petGroup[i].length; j++){
-        //         var type = petGroup[i][j]["target"].collision_type;
-        //         var index = Math.floor(Math.random() * (posArray[i].length-1 - 0 + 1)) + 0;
-        //         if(petLoaded[i].includes(index)){
-        //             index = this.findOtherPosition(index,posArray[i],petLoaded[i]);
-        //         }
-        //         var pos = posArray[i][index];
-
-        //         additionalPet.push(this.getParent().createPetObject(i, j, type,verticalPos,originalHorz,pos));
-        //         petLoaded[i].push(index);
-        //     }
-        // }
-        // //
 
         // // request main layer push more pets with attributes stored at additionalPet array;
         // for (var i = 0; i < additionalPet.length; i++) {

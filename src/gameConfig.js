@@ -90,7 +90,7 @@ var joinerConfig = {
 };
 var startWithType = 5555;
 var maxCols = 7;
-var maxRows = 5;
+var maxRows = 7;
 
 var offSetPetX = 5;
 var offSetPetY = 5;

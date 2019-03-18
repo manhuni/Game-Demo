@@ -1,7 +1,7 @@
 var GameLayer = cc.Layer.extend({
     world: null, //contain all physic
     _debugNode: null, //show element physics
-    _showDebugger: true,
+    _showDebugger: false,
     _effectNode: null,
     _allOfPets: [],
     _testMode: false,
@@ -36,7 +36,7 @@ var GameLayer = cc.Layer.extend({
 
         //create polygonshape for multifixture
 
-        var rows = 2;
+        var rows = 7;
         var cols = 7;
 
         var PetProperties = [];
@@ -75,11 +75,8 @@ var GameLayer = cc.Layer.extend({
 
                 loadedPet[i].push(index);
                 this.createMultiPolygonEntity(PetProperties[i][j],pos);
-
-                cc.log("Pospos",pos);
             }
-        }
-        cc.log(PetProperties);
+        };
 
         //listen mouse event click on gameLayer
         cc.eventManager.addListener(PetMouseListener, this);
@@ -412,7 +409,7 @@ GameLayer.prototype.createMultiPolygonEntity = function(object,pos) {
         bodyDef.position.Set(pos.x / PTM_RATIO, pos.y / PTM_RATIO);
         bodyDef.userData = sprite;
         var body = _this.world.CreateBody(bodyDef);
-        
+
         // define a fixture def
         for (var i = 0; i < eachPolygon.length; i++) {
             var fixDef = new b2FixtureDef;

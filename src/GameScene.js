@@ -1,7 +1,7 @@
 var GameLayer = cc.Layer.extend({
-    space: null, //contain all physic
+    world: null, //contain all physic
     _debugNode: null, //show element physics
-    _showDebugger: false,
+    _showDebugger: true,
     _effectNode: null,
     _allOfPets: [],
     _testMode: false,
@@ -10,57 +10,92 @@ var GameLayer = cc.Layer.extend({
     ctor: function() {
         this._super();
         this.init();
+        var size = cc.director.getWinSize();
         //setup for draw test
         this._effectNode = new EffectLayer();
         this._effectNode.setTag(gameConfig.TAG.TEMP_ANI_TAG);
         this.addChild(this._effectNode, gameConfig.INDEX.EFFECTNODE_INDEX);
 
-        //define physic world1
-        this.space = this.initPhysicsWorld();
+        //define physic world
+        this.initPhysicsWorld();
         //turn on or off debug node physic
         this.showPhysicWorld(this._showDebugger);
-        //create an object physic sprite
-
-        var size = cc.director.getWinSize();
-        var bounderGame = {
-            position: cc.p(size.width / 2, size.height / 2),
-            image: res.gameBackground,
-            json: res.gameBackground_JSON,
-            type: typeCollision.GROUND_INNER,
-            scale: 1,
-            style: "static"
-
-        };
-        //put in group, we add pets in center of screen 
-        //org: size.height/2;
-        //pettile: 50px
-
-        var rows = 7;
-        var cols = maxCols;
+        // //create an object physic sprite
+        var pos1 = cc.p(size.width / 2, size.height / 2 + 200);
+        var pos2 = cc.p(size.width / 2, size.height / 2);
         //
-        var Pets = [];
-        for (var i = 0; i < rows; i++) {
-            for (var j = 0; j < cols; j++) {
-                var pet = this.createPetObject(i, j, null, size.height / 2 - 300, originalHorz, null);
-                Pets.push(pet);
+        //create polygonshape for multifixture
+        // var posGround = cc.p(size.width / 2, 0);
+        // var scaleGround = 1.0;
+        // var massGround = 10;
+        // var jsonPathGround = res.gameBackground_JSON;
+        // var styleGround = 'ground';
+
+        // var objectGround = this.createPetObject(posGround, scaleGround, massGround, jsonPathGround, styleGround);
+        // this.createGround(objectGround);
+
+        //create polygonshape for multifixture
+
+        var rows = 2;
+        var cols = 7;
+
+        var PetProperties = [];
+        for(var i = 0; i<rows; i++){
+            PetProperties[i] = [];
+            for(var j = 0; j<cols; j++){
+                // var scale = Math.floor(Math.random() * (1.2 - 0.5 + 1)) + 0.5;
+                var scale = 1.0;
+                var mass = Math.floor(Math.random() * (massOfPets.length-1 - 0 + 1)) + 0;
+                var json = 'random';
+                var style = 'dynamic';
+                var property = this.createPetObject(mass,scale,json,style);
+                PetProperties[i].push(property);
             }
         };
-        cc.log(Pets)
-            //create a entity and need return some body and shape, sprite
-            //add game play bounder
-        this.createStaticEntity(bounderGame);
-        //add pet
-        for (var i = 0; i < Pets.length; i++) {
-            this.createPhysicEntity(Pets[i]);
+        //
+
+        var startX = 50; var startY = size.height/2-220;
+        var loadedPet = [];
+
+        for(var i = 0; i<PetProperties.length; i++){
+
+            loadedPet[i] = [];
+
+            for(var j = 0; j<PetProperties[i].length;j++){
+
+                var pet = PetProperties[i][j].sprite;
+                var s = pet.getBoundingBox();
+                var posArray = this.createDataPosition(s,startX,startY);
+                var index = Math.floor(Math.random() * (posArray[i].length-1 - 0 + 1)) + 0;
+
+                if(loadedPet[i].includes(index)){
+                    index = findOtherPosition(index,posArray[i],loadedPet[i]);
+                };
+                var pos = posArray[i][index];
+
+                loadedPet[i].push(index);
+                this.createMultiPolygonEntity(PetProperties[i][j],pos);
+
+                cc.log("Pospos",pos);
+            }
         }
+        cc.log(PetProperties);
+
         //listen mouse event click on gameLayer
-        cc.eventManager.addListener(petListener, this);
+        cc.eventManager.addListener(PetMouseListener, this);
         //need update for physics requirement
         this.scheduleUpdate();
     },
     init: function() {
         this._super();
         var size = cc.director.getWinSize();
+        //background image
+        var size = cc.director.getWinSize();
+        var GameBackground = cc.Sprite.create(res.gameBackground);
+        GameBackground.setPosition(cc.p(size.width/2, size.height / 2));
+        this.addChild(GameBackground, gameConfig.INDEX.ANIMATIONPET_INDEX);
+        // end test
+
         //add shuffle button
         //2.create a menu and assign onPlay event callback to it
         var norShuffle = cc.Sprite.create(res.Shuffle_Button_Nor);
@@ -77,35 +112,60 @@ var GameLayer = cc.Layer.extend({
         // sprite.setPosition(cc.p(size.width / 2, size.height / 2));
         // this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
         //create a animation effect pet
-        //test
-        var size = cc.director.getWinSize();
-        var myPet = new PetAnimationSprite(res.pet0_PLIST, res.pet0_PNG);
-        myPet.setPosition(cc.p(100, size.height / 2 + 210));
-        this.addChild(myPet, gameConfig.INDEX.ANIMATIONPET_INDEX+1);
-        // end test
-
+        
     },
     initPhysicsWorld: function() {
+        var screenSize = cc.director.getWinSize();
+        var b2Vec2 = Box2D.Common.Math.b2Vec2,
+            b2BodyDef = Box2D.Dynamics.b2BodyDef,
+            b2Body = Box2D.Dynamics.b2Body,
+            b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
+            b2Fixture = Box2D.Dynamics.b2Fixture,
+            b2World = Box2D.Dynamics.b2World,
+            b2MassData = Box2D.Collision.Shapes.b2MassData,
+            b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
+            b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
+            b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
+        var gravity = new b2Vec2(0, -9.8);
+        this.world = new b2World(gravity, true); //true allow sleep
+        this.world.SetContinuousPhysics(true);
+        //official
+        var fixDef = new b2FixtureDef;
+        fixDef.userData = null;
+        fixDef.isSensor = false;
+        fixDef.density = 100.0;
+        fixDef.friction = 0.5;
+        fixDef.restitution = 0.2;
 
-        space = new cp.Space();
-        var size = cc.director.getWinSize();
-        // 壁を作る
-        var walls = [
-            new cp.SegmentShape(space.staticBody, cp.v(0, 0), cp.v(size.width, 0), 1), // bottom
-            new cp.SegmentShape(space.staticBody, cp.v(0, size.height), cp.v(size.width, size.height), 1), // top
-            new cp.SegmentShape(space.staticBody, cp.v(0, 0), cp.v(0, size.height), 1), // left
-            new cp.SegmentShape(space.staticBody, cp.v(size.width, 0), cp.v(size.width, size.height), 1) // right
-        ];
-        for (var i = 0; i < walls.length; i++) {
-            var shape = walls[i];
-            shape.setElasticity(0);
-            shape.setFriction(0);
-            space.addStaticShape(shape);
-            shape.setCollisionType(0);
+        var bodyDef = new b2BodyDef;
+        bodyDef.angularDamping = 0;
+        bodyDef.linearDamping = 0;
+        // bodyDef.fixedRotation = true;
+        //create ground
+        bodyDef.type = b2Body.b2_staticBody;
+        fixDef.shape = new b2PolygonShape;
+        fixDef.shape.SetAsBox(screenSize.width / PTM_RATIO, 0.1);
+        // upper
+        bodyDef.position.Set(0, screenSize.height / PTM_RATIO);
+        this.world.CreateBody(bodyDef).CreateFixture(fixDef);
+        // bottom
+        bodyDef.position.Set(0, 0 + 2);
+        this.world.CreateBody(bodyDef).CreateFixture(fixDef);
+
+        fixDef.shape.SetAsBox(0.1, screenSize.height / PTM_RATIO);
+        // left
+        bodyDef.position.Set(0, 0);
+        this.world.CreateBody(bodyDef).CreateFixture(fixDef);
+        // right
+        bodyDef.position.Set(screenSize.width / PTM_RATIO, 0);
+        this.world.CreateBody(bodyDef).CreateFixture(fixDef);
+        //end official
+
+        return {
+            name: 'BounderGame'
+                // bodyDef: bodyDef,
+                // fixDef: fixDef
         }
-        space.gravity = cp.v(0, -800); // 下方向に重力を設定する
-        // space.sleepTimeThreshold = 0.5;
-        return space
     },
     shuffleAllPhysics: function() {
         // cc.log("Before");
@@ -174,138 +234,65 @@ var GameLayer = cc.Layer.extend({
     },
     showPhysicWorld: function(visiable) {
         //add debug for node
-        this._debugNode = cc.PhysicsDebugNode.create(space);
-        this._debugNode.visible = visiable;
-        this.addChild(this._debugNode, gameConfig.INDEX.DEBBUGLAYER_INDEX);
+        if (visiable) {
+
+            var oldDebugDrawCanvas = document.getElementById("debugDrawCanvas");
+            if (oldDebugDrawCanvas) {
+                document.getElementById("Cocos2dGameContainer").removeChild(oldDebugDrawCanvas);
+            };
+            var scale = PTM_RATIO * cc.EGLView._getInstance().getViewPortRect().width / cc.EGLView._getInstance().getDesignResolutionSize().width;
+            var gameCanvas = document.getElementById("gameCanvas");
+            var gameContainer = document.getElementById("Cocos2dGameContainer");
+            //
+            var debugCanvas = document.createElement("canvas");
+            debugCanvas.id = "debugDrawCanvas";
+            debugCanvas.height = gameCanvas.height;
+            debugCanvas.width = gameCanvas.width;
+            debugCanvas.style.height = gameCanvas.style.height;
+            debugCanvas.style.width = gameCanvas.style.width;
+            debugCanvas.style.position = "absolute";
+            debugCanvas.style.outline = "none";
+            debugCanvas.style.left = "0px";
+            debugCanvas.style.top = gameContainer.style.paddingTop;
+            debugCanvas.style["-webkit-transform"] = "rotate(180deg) scale(-1,1)";
+            debugCanvas.style["pointer-events"] = "none";
+            gameContainer.appendChild(debugCanvas);
+            //
+            this.debugDraw = new Box2D.Dynamics.b2DebugDraw();
+            this.debugDraw.SetSprite(debugCanvas.getContext("2d"));
+            this.debugDraw.SetDrawScale(scale);
+            this.debugDraw.SetFillAlpha(0.3);
+            this.debugDraw.SetLineThickness(1.0);
+            //
+            console.log(this.debugDraw);
+
+            var b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
+            this.debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit | b2DebugDraw.e_edgeShape);
+            this.world.SetDebugDraw(this.debugDraw);
+
+            console.log(scale);
+        }
     },
-    createStaticEntity: function(object) {
-        //1. create a sprite
-        var sprite = new cc.Sprite(object.image);
-        sprite.setPosition(object.position)
-        sprite.scale = object.scale;
-        sprite.collision_type = object.type;
-        this.addChild(sprite, gameConfig.INDEX.EFFECTNODE_INDEX);
-
-        //2. create a body
-        var body = new cp.Body(Infinity, Infinity);
-        body.setPos(sprite.getPosition());
-
-        //3. create body with json file, first need load all vertices
-        var _this = this;
-        this.loadAllVerticesFromJson(object.json).then(function(data) {
-            //when finish load json start convert vertices to points
-
-            var PBE_scaleCoordinate = sprite.getBoundingBox().width;
-            var PBE_offsetX = ((-sprite.anchorX) * (sprite.getBoundingBox().width)) + data["rigidBodies"][0]["origin"]["x"];
-            var PBE_offsetY = ((-sprite.anchorY) * (sprite.getBoundingBox().height)) + data["rigidBodies"][0]["origin"]["y"];
-            var PBE_vertices = data["rigidBodies"][0]["shapes"][0]["vertices"];
-            var PBE_polygons = data["rigidBodies"][0]["polygons"];
-
-            //load all shape
-            //shape group
-            var shapeGroup = [];
-            for (var i = 0; i < PBE_polygons.length; i++) {
-                shapeGroup[i] = [];
-                var vertices = [];
-                for (var j = PBE_polygons[i].length - 1; j >= 0; j--) {
-                    vertices.push(PBE_offsetX + PBE_scaleCoordinate * PBE_polygons[i][j].x, PBE_offsetY + PBE_scaleCoordinate * PBE_polygons[i][j].y)
-                }
-                var polyShapeChip = new cp.PolyShape(body, vertices, cp.vzero);
-                polyShapeChip.setElasticity(0.1);
-                polyShapeChip.setFriction(10);
-                polyShapeChip.surface_v = cp.vzero;
-                polyShapeChip.setCollisionType(object.type);
-                polyShapeChip.group = object.type;
-                _this.space.addStaticShape(polyShapeChip);
-                shapeGroup[i].push(polyShapeChip);
-            }
-            return {
-                sprite: sprite,
-                shape: shapeGroup,
-                body: body
-            }
-
-
-        }).catch(function(error) {
-
-            cc.log("An critical error happened ... ", error);
-
-        });
-    },
-    createPhysicEntity: function(object) {
-        //1. create a sprite
-        var sprite = new PetSprite(object.image);
-        sprite.scale = object.scale;
-        sprite.colorType = object.colorType;
-        sprite.isVisited = false;
-        sprite.collision_type = object.type;
-        // sprite.setTypeLabel(object.colorType);
-        sprite.gameGroup = gameConfig.GAMEGROUP.PET;
-        //2. create a body
-        var body = new cp.Body(object.mass, cp.momentForBox(object.mass, sprite.getBoundingBox().width, sprite.getBoundingBox().height));
-        body.setPos(object.position);
-        body.v_limit = 500;
-        this.space.addBody(body);
-        sprite.setBody(body);
-        this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
-        var shapeGroup = [];
-
-        //3. create body with json file, first need load all vertices
-        var _this = this;
-        this.loadAllVerticesFromJson(object.json).then(function(data) {
-            //when finish load json start convert vertices to points
-            var PBE_scaleCoordinate = sprite.getBoundingBox().width;
-            var PBE_offsetX = ((-sprite.anchorX) * (sprite.getBoundingBox().width)) + data["rigidBodies"][0]["origin"]["x"];
-            var PBE_offsetY = ((-sprite.anchorY) * (sprite.getBoundingBox().height)) + data["rigidBodies"][0]["origin"]["y"];
-            var PBE_vertices = data["rigidBodies"][0]["shapes"][0]["vertices"];
-            var PBE_polygons = data["rigidBodies"][0]["polygons"];
-
-            //load all shape
-            //shape group
-            for (var i = 0; i < PBE_polygons.length; i++) {
-                shapeGroup[i] = [];
-                var vertices = [];
-                for (var j = PBE_polygons[i].length - 1; j >= 0; j--) {
-                    vertices.push(PBE_offsetX + PBE_scaleCoordinate * PBE_polygons[i][j].x, PBE_offsetY + PBE_scaleCoordinate * PBE_polygons[i][j].y)
-                }
-                var polyShapeChip = new cp.PolyShape(body, vertices, cp.vzero);
-                polyShapeChip.setElasticity(0);
-                polyShapeChip.setFriction(10);
-                polyShapeChip.surface_v = cp.vzero;
-                polyShapeChip.surface_vr = cp.vzero;
-                polyShapeChip.setCollisionType(object.type);
-                polyShapeChip.group = object.type;
-
-                _this.space.addShape(polyShapeChip);
-                shapeGroup[i].push(polyShapeChip);
-            }
-
-        }).catch(function(error) {
-
-            cc.log("An critical error happened ... ", error);
-
-        });
-        this._allOfPets.push({
-            sprite: sprite,
-            shape: shapeGroup,
-            body: body
-        });
-    },
-    loadAllVerticesFromJson: function(json) {
-        return new Promise(function(resolve, reject) {
-            cc.loader.loadJson(json, function(error, data) {
-                if (!error) {
-                    // cc.log(JSON.stringify(data));
-                    resolve(data);
-                } else {
-                    reject("Can not load json file ...");
-                }
-            })
-        })
-    },
-
     update: function(dt) {
-        this.space.step(dt);
+        var velocityIterations = 8;
+        var positionIterations = 1;
+
+        // Instruct the world to perform a single step of simulation. It is
+        // generally best to keep the time step and iterations fixed.
+        this.world.Step(dt, velocityIterations, positionIterations);
+
+        //Iterate over the bodies in the physics world
+        for (var b = this.world.GetBodyList(); b; b = b.GetNext()) {
+            if (b.GetUserData() != null) {
+                //Synchronize the AtlasSprites position and rotation with the corresponding body
+                var bodies = b.GetUserData();
+                bodies.x = b.GetPosition().x * PTM_RATIO;
+                bodies.y = b.GetPosition().y * PTM_RATIO;
+                bodies.rotation = -1 * cc.radiansToDegrees(b.GetAngle());
+            }
+        } //
+        this.world.DrawDebugData();
+        this.world.ClearForces();
     }
 });
 var GameScene = cc.Scene.extend({
@@ -316,268 +303,221 @@ var GameScene = cc.Scene.extend({
     }
 });
 
-//Create a "one by one" touch event listener (processes one touch at a time)
-var petListener = cc.EventListener.create({
-    event: cc.EventListener.TOUCH_ONE_BY_ONE,
-    swallowTouches: true,
-    onTouchBegan: function(touch, event) {
-        var target = event.getCurrentTarget();
-        //08.03.2019//click
-        var allChildenOfGameLayer = target._children;
-        // position of all pets and filter only pets
-        var petObject = [];
-        for (var i = 0; i < allChildenOfGameLayer.length; i++) {
-            if (allChildenOfGameLayer[i].gameGroup != 0) {
-                continue;
-            } else {
-                petObject.push(allChildenOfGameLayer[i]);
-            }
-        }
-        //calculate distance between click point vs all to find point nearest
-        for (var i = 0; i < petObject.length; i++) {
-            var distClickedWithPets = cc.pDistance(touch.getLocation(), petObject[i].getPosition());
-            if (distClickedWithPets < joinerConfig.radiusCanClickedFromCenterPet) {
-                petObject[i].opacity = 255;
-                // // increase number of segment(purpose for count limit point, ex: 3 seg then allow clear pet)
-                target._effectNode._counterSegment = target._effectNode._counterSegment + 1;
 
-                // //Adding a fire animation at center target pet
-                var fireAnimation = target._effectNode.addFireAnim(petObject[i]);
-                petObject[i].isVisited = true;
-
-                // //Group all component of pet(fire, join, it'self to control(delete, point, ...))
-                target._effectNode.petEffected.push({
-                        target: petObject[i],
-                        fireAnimation: fireAnimation,
-                        joiner: null
-                    })
-                    // //Magnify target pet(effect ... )
-                    // target._effectNode.glowUpPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
-                return true;
-            }
-        }
-        return false
-    },
-    onTouchMoved: function(touch, event) {
-        // We will add joiner from here
-        var target = event.getCurrentTarget();
-        var lastTarget = target._effectNode.petEffected[target._effectNode.petEffected.length - 1]["target"];
-        // Check all position of pets to evaluate distance need join
-        var allChildenOfGameLayer = target._children;
-        // position of all pets and filter only pets
-        var petObject = [];
-
-        for (var i = 0; i < allChildenOfGameLayer.length; i++) {
-            if (allChildenOfGameLayer[i].gameGroup != 0) {
-                continue;
-            } else {
-                petObject.push(allChildenOfGameLayer[i]);
-            }
-        }
-        // Find pets none visted, if non visted then push into an array to calculate distance
-        var petNoneVisted = [];
-        for (var i = 0; i < petObject.length; i++) {
-            if (!petObject[i].isVisited) {
-                petNoneVisted.push(petObject[i]);
-            }
-        }
-        // Then we need calculate distance between pos of first pet
-        // With touch location and compare with position of pets non visited
-
-        var originRange = lastTarget.getBoundingBox().width / 2;
-        var bonusLength = lastTarget.getBoundingBox().width / 2;
-        var totalRange = originRange + bonusLength;
-
-        var distanceRuntime = cc.pDistance(lastTarget.getPosition(), touch.getLocation());
-
-        if (distanceRuntime > originRange && distanceRuntime < totalRange) {
-            // Now time for play this will determine draw or not
-            if (target._effectNode.petEffected.length >= 2) {
-                var alreadyJoinPet = target.findPetHaveAlreadyJoin(target, touch.getLocation(), target._effectNode.petEffected);
-            }
-            var nearestPoint = target.findNearestPosition(lastTarget, touch.getLocation(), petNoneVisted);
-
-
-            if (nearestPoint != -1) {
-                if (petNoneVisted[nearestPoint].colorType == lastTarget.colorType) {
-                    //if same color then permit join but must check
-                    //have any pet cross this path joiner
-                    var radiusScan = cc.pDistance(lastTarget.getPosition(), petNoneVisted[nearestPoint].getPosition());
-                    var inrangeRadiusArray = target.findInrangePet(radiusScan, lastTarget, petNoneVisted);
-                    //check in this path have any pet under
-                    var isPetUnderPathObj = target.findPetUnderPath(inrangeRadiusArray, lastTarget, petNoneVisted[nearestPoint]);
-
-                    if (isPetUnderPathObj.isPetUnder != false) {
-                        petNoneVisted[nearestPoint].isVisited = true;
-                        // First we will blow up that sprite
-                        target._effectNode._counterSegment = target._effectNode._counterSegment + 1;
-
-                        var angle = isPetUnderPathObj.angle;
-                        // define a new segment
-                        var beforeJoiner = target._effectNode.petEffected[target._effectNode.petEffected.length - 1]["joiner"];
-                        cc.log(beforeJoiner);
-                        var scaleYUPJ = 0;
-                        beforeJoiner != null ? scaleYUPJ = beforeJoiner.scaleY + 0.07 : scaleYUPJ = gameConfig.SCALE.JOINER_FIXED_SCALEY;
-
-                        var objJoinerProperties = {
-                            x: lastTarget.getPosition().x,
-                            y: lastTarget.getPosition().y,
-                            anchorX: 0,
-                            anchorY: 0.5,
-                            scaleY: scaleYUPJ,
-                            rotation: angle
-                        };
-
-                        var joinerSprite = new JoinerSprite(objJoinerProperties);
-
-                        // TINH KHOANG CACH TU POSA -> POSB DE DIEU CHINH SCALE PHU HOP
-                        var disScaleRelative = cc.pDistance(lastTarget.getPosition(), petNoneVisted[nearestPoint].getPosition());
-                        var widthOfJoiner = joinerSprite.width * gameConfig.SCALE.JOINER_FIXED_SCALEX; // pixel
-                        var scaleRatioX = disScaleRelative * gameConfig.SCALE.JOINER_FIXED_SCALEX / widthOfJoiner;
-                        joinerSprite.scaleX = scaleRatioX;
-
-                        joinerSprite.setTag(gameConfig.TAG.JOIN_ANIM)
-                        target._effectNode.addChild(joinerSprite, gameConfig.INDEX.EFFECTNODE_JOIN_INDEX);
-                        var beforeFire = target._effectNode.petEffected[target._effectNode.petEffected.length - 1]["fireAnimation"];
-                        var scaleYF = beforeFire.scale + 0.1;
-
-
-                        var fireAnimation = target._effectNode.addFireAnim(petNoneVisted[nearestPoint]);
-                        fireAnimation.scale = scaleYF;
-                        // add all into one
-                        target._effectNode.petEffected.push({
-                                target: petNoneVisted[nearestPoint],
-                                fireAnimation: fireAnimation,
-                                joiner: joinerSprite
-                            })
-                            // target._effectNode.glowDownPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 2]['target']);
-                            // target._effectNode.glowUpPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
-
-                    }
-
-                }
-            }
-
-        }
-    },
-    onTouchEnded: function(touch, event) {
-        // o day can kiem tra dieu kien de tinh diem va loai bo cac doi tuong
-        var target = event.getCurrentTarget();
-        // phai reset lai all target
-        // o day can xet xem do dai cua doi tuong co dam bao lon hon 2 hay khong
-        if (target._effectNode.petEffected.length >= 2) {
-            target._effectNode.dropPetAnimation(target._effectNode.petEffected);
-        }
-        for (var i = 0; i < target._effectNode.petEffected.length; i++) {
-            target._effectNode.petEffected[i]['target'].isVisited = false;
-            target._effectNode.petEffected[i]['target'].tmpBlocked = false;
-        }
-        target._effectNode.removeAllChildren();
-        // target._effectNode.glowDownPet(target._effectNode.petEffected[target._effectNode.petEffected.length - 1]['target']);
-
-        target._effectNode.petEffected = [];
-        target._effectNode._counterSegment = 0;
-        //un register/remove all handle listenner
-
-        return false;
-    }
-});
-
-GameLayer.prototype.findNearestPosition = function(lastTarget, touchPosition, arrayPosition) {
-    var indexOfShostestChild = arrayPosition.findIndex(function(element, index, array) {
-        var distancePosition = cc.pDistance(touchPosition, element);
-        return distancePosition < joinerConfig.permitedJoinerDistance && element != lastTarget;
-    });
-    return indexOfShostestChild;
-};
-GameLayer.prototype.findInrangePet = function(range, lastTarget, arrayPets) {
-    var inrangeRadius = [];
-    for (var i = 0; i < arrayPets.length; i++) {
-
-        var origin = lastTarget.getPosition();
-        var destination = arrayPets[i].getPosition();
-        var distance = cc.pDistance(origin, destination);
-        if (distance < range && arrayPets[i] != lastTarget) {
-            inrangeRadius.push(arrayPets[i]);
-        }
-    }
-    return inrangeRadius;
-};
-GameLayer.prototype.findPetUnderPath = function(inrangeRadiusArray, lastTarget, nearestTarget) {
-
-    var originPos = lastTarget.getPosition();
-    var destinationPos = nearestTarget.getPosition();
-
-    var angleOrgToDest = cc.radiansToDegrees(Math.atan2(destinationPos.y - originPos.y, destinationPos.x - originPos.x));
-    var petUnderPath = [];
-    var isPetUnder = null;
-    //
-    for (var i = 0; i < inrangeRadiusArray.length; i++) {
-
-        var inRadiusPetPos = inrangeRadiusArray[i].getPosition();
-        var angleOrgToInradius = cc.radiansToDegrees(Math.atan2(inRadiusPetPos.y - originPos.y, inRadiusPetPos.x - originPos.x));
-
-        if ((angleOrgToInradius > (angleOrgToDest - joinerConfig.offsetAngle)) && (angleOrgToInradius < (angleOrgToDest + joinerConfig.offsetAngle))) {
-            cc.log("We don't permit you join this destination pet ...");
-            isPetUnder = false;
-            break;
-        } else {
-            isPetUnder = true;
-        };
-
-    };
-    cc.log("We are checking, please wait a moment ...");
-    return {
-        isPetUnder: isPetUnder,
-        angle: angleOrgToDest
-    }
-
-};
-GameLayer.prototype.findPetHaveAlreadyJoin = function(target, touchPosition, arrayVisitedPet) {
+GameLayer.prototype.findPetHaveAlreadyJoin = function(gameLayer, touchPosition, arrayVisitedPet) {
     var lastTarget = arrayVisitedPet[arrayVisitedPet.length - 1]["target"];
     var previousTargetPos = arrayVisitedPet[arrayVisitedPet.length - 2]["target"].getPosition();
     var distanceLastPrePet = cc.pDistance(touchPosition, previousTargetPos);
     //remove this joiner
     if (distanceLastPrePet < joinerConfig.permitedJoinerDistance) {
-        target._effectNode.removeChild(arrayVisitedPet[arrayVisitedPet.length - 1]["joiner"], true);
-        target._effectNode.removeChild(arrayVisitedPet[arrayVisitedPet.length - 1]["fireAnimation"], true);
-        target._effectNode._counterSegment = target._effectNode._counterSegment - 1;
+        gameLayer._effectNode.removeChild(arrayVisitedPet[arrayVisitedPet.length - 1]["joiner"], true);
+        gameLayer._effectNode.removeChild(arrayVisitedPet[arrayVisitedPet.length - 1]["fireAnimation"], true);
+        gameLayer._effectNode._counterSegment = gameLayer._effectNode._counterSegment - 1;
         //reset lastTarget
         lastTarget.isVisited = false;
-        target._effectNode.petEffected.splice(arrayVisitedPet.length - 1, 1);
+        gameLayer._effectNode.petEffected.splice(arrayVisitedPet.length - 1, 1);
     };
 };
-GameLayer.prototype.createPetObject = function(rows, cols, typepet, originalVertical, originalHorizontal, pos) {
+
+GameLayer.prototype.createDataPosition = function(s,startX,startY) {
+    var pos = [];
+    for(var i = 0; i<maxRows; i++){
+        pos[i] = [];
+        for(var j = 0; j<maxCols; j++){
+            var x = startX + offSetPetX + j*s.width;
+            var y = startY + offSetPetY + i*s.height;
+            pos[i].push(cc.p(x,y));
+        }
+    };
+    return pos;
+};
+GameLayer.prototype.createPetObject = function(mass,scale,jsonPath, style) {
 
     var size = cc.director.getWinSize();
-    var originalVertical = originalVertical;
-    var originalHorizontal = originalHorizontal;
-
-
-    var x = originalHorizontal + pettile * cols;
-    var y = originalVertical + pettile * rows;
-
-    var position = pos != null ? pos : cc.p(x, y);
     //Math.floor(Math.random() * (max - min + 1)) + min;
-    var resourcePet = typeOfPet[Math.floor(Math.random() * ((typeOfPet.length - 1) - 0 + 1)) + 0];
+    // var resourcePet = typeOfPet[Math.floor(Math.random() * ((typeOfPet.length - 1) - 0 + 1)) + 0];
+    var resourcePet = typeTestOfPet[Math.floor(Math.random() * ((typeTestOfPet.length - 1) - 0 + 1)) + 0];
 
-    var image = `${resourcePet}.png`;
-    var json = `res/tsum/${resourcePet}.json`;
-    var type = typepet == null ? this._commontype++ : typepet;
-
-    var mass = massOfPets[cols];
-    var scale = 1.2;
-    var colorType = resourcePet;
-    var style = "dinamic";
-    return {
-        position: position,
-        image: image,
-        json: json,
-        type: type,
-        mass: mass,
-        scale: scale,
-        style: style,
-        colorType: colorType
-
+    var json = null;
+    var image = null;
+    var colorType = null;
+    if (jsonPath != 'random') {
+        json = jsonPath;
+    } else {
+        json = `res/tsum/${resourcePet}.json`;
+        image = `${resourcePet}.png`;
     };
+    var sprite = new PetSprite(image);
+    sprite.scale = scale;
+
+    return {
+        json: json,
+        image:image,
+        mass: mass,
+        style: style,
+        sprite: sprite
+    };
+};
+GameLayer.prototype.createMultiPolygonEntity = function(object,pos) {
+
+    var size = cc.director.getWinSize();
+    var b2Vec2 = Box2D.Common.Math.b2Vec2,
+        b2BodyDef = Box2D.Dynamics.b2BodyDef,
+        b2Body = Box2D.Dynamics.b2Body,
+        b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
+        b2Fixture = Box2D.Dynamics.b2Fixture,
+        b2World = Box2D.Dynamics.b2World,
+        b2MassData = Box2D.Collision.Shapes.b2MassData,
+        b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
+        b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
+        b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
+
+    var jsonPath = object.json;
+    var _this = this;
+
+    this.loadAllVerticesFromJson(jsonPath).then(function(data) {
+
+        var rigidBodies = data.rigidBodies[0];
+        var colorType = rigidBodies.name;
+        var polygons = rigidBodies.polygons;
+
+
+        var sprite = object.sprite;
+        sprite.setPosition(pos);
+        _this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
+        var s = sprite.getBoundingBox();
+
+        //
+        var eachPolygon = [];
+        for (var i = 0; i < polygons.length; i++) {
+            eachPolygon[i] = [];
+            for (var j = 0; j < polygons[i].length; j++) {
+                var x = ((polygons[i][j].x) - 0.5) * s.width / PTM_RATIO;
+                var y = ((polygons[i][j].y) - 0.5) * s.height / PTM_RATIO;
+                eachPolygon[i].push({
+                    x,
+                    y
+                });
+            }
+        };
+        // define a body def
+        var bodyDef = new b2BodyDef;
+        if (object.style != 'static') {
+            bodyDef.type = b2Body.b2_dynamicBody;
+            sprite.colorType = colorType;
+            sprite.isVisited = false;
+        } else {
+            bodyDef.type = b2Body.b2_staticBody;
+        }
+        bodyDef.position.Set(pos.x / PTM_RATIO, pos.y / PTM_RATIO);
+        bodyDef.userData = sprite;
+        var body = _this.world.CreateBody(bodyDef);
+        
+        // define a fixture def
+        for (var i = 0; i < eachPolygon.length; i++) {
+            var fixDef = new b2FixtureDef;
+            fixDef.density = object.mass;
+            fixDef.friction = 10.1;
+            fixDef.restitution = 0.01;
+            fixDef.shape = new b2PolygonShape;
+            fixDef.shape.SetAsArray(eachPolygon[i], eachPolygon[i].length);
+            body.CreateFixture(fixDef);
+
+        };
+        var finalObj = {
+            body: body,
+            sprite: sprite
+        };
+        _this._allOfPets.push(finalObj);
+
+    }).catch(function(error) {
+        cc.log("We can't load json file, please check again ...");
+        cc.log(error);
+    })
+};
+// GameLayer.prototype.createDataPos = function(object){
+//     cc.log(object);
+//     for(var i = 0; i<maxRows; i++){
+//      for(var j = 0; j<maxCols; j++){
+
+//          var x = startX + offSetPetX + sizeOfPetX;
+//          var y = startY + offSetPetY + sizeOfPetY;
+        
+//      }
+//     }
+// };
+GameLayer.prototype.loadAllVerticesFromJson = function(json) {
+    return new Promise(function(resolve, reject) {
+        cc.loader.loadJson(json, function(error, data) {
+            if (!error) {
+                // cc.log(JSON.stringify(data));
+                resolve(data);
+            } else {
+                reject("Can not load json file ...");
+            }
+        })
+    })
+};
+GameLayer.prototype.createGround = function(object){
+    var size = cc.director.getWinSize();
+    var b2Vec2 = Box2D.Common.Math.b2Vec2,
+        b2BodyDef = Box2D.Dynamics.b2BodyDef,
+        b2Body = Box2D.Dynamics.b2Body,
+        b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
+        b2Fixture = Box2D.Dynamics.b2Fixture,
+        b2World = Box2D.Dynamics.b2World,
+        b2MassData = Box2D.Collision.Shapes.b2MassData,
+        b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
+        b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
+        b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
+
+    var jsonPath = object.json;
+    var _this = this;
+    this.loadAllVerticesFromJson(jsonPath).then(function(data) {
+        var rigidBodies = data.rigidBodies[0];
+        var colorType = rigidBodies.name;
+        var imagePath = object.imagePath;
+        var polygons = rigidBodies.polygons;
+
+        var sprite = new cc.Sprite.create(imagePath);
+        sprite.setPosition(object.position);
+        sprite.scale = object.scale;
+        var s = sprite.getBoundingBox();
+
+        //
+        var eachPolygon = [];
+        for (var i = 0; i < polygons.length; i++) {
+            eachPolygon[i] = [];
+            for (var j = 0; j < polygons[i].length; j++) {
+                var x = ((polygons[i][j].x) - 0.5) * s.width / PTM_RATIO;
+                var y = ((polygons[i][j].y)) * s.height / PTM_RATIO;
+                eachPolygon[i].push({
+                    x,
+                    y
+                });
+            }
+        };
+        // define a body def
+        var bodyDef = new b2BodyDef;
+        bodyDef.type = b2Body.b2_staticBody;
+        bodyDef.position.Set(object.position.x / PTM_RATIO, object.position.y / PTM_RATIO);
+        bodyDef.userData = null;
+        _this.removeChild(sprite,true);
+
+        var body = _this.world.CreateBody(bodyDef);
+        // define a fixture def
+        for (var i = 0; i < eachPolygon.length; i++) {
+            var fixDef = new b2FixtureDef;
+            fixDef.density = object.mass;
+            fixDef.friction = 10.1;
+            fixDef.restitution = 0.1;
+            fixDef.shape = new b2PolygonShape;
+            fixDef.shape.SetAsArray(eachPolygon[i], eachPolygon[i].length);
+            body.CreateFixture(fixDef);
+        }//
+
+    }).catch(function(error) {
+        cc.log("We can't load json file, please check again ...");
+        cc.log(error);
+    })
 };

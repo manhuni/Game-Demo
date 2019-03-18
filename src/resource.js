@@ -29,6 +29,7 @@ var res = {
 	helloworld_JSON: "res/HelloWorld.json",
 
 	gameBackground: "res/background_game.png",
+	gameStaticGround: "res/static_ground.png",
 	gameBackground_JSON: "res/background_game.json",
 	gameBackground_inner: "res/background_inner.png",
 	//pets group
@@ -62,12 +63,16 @@ var res = {
     //joinner
    	Joiner_PNG: "res/joinblock.png",
    	 //fire animation
-    Fire_PLIST: "res/fires/fireanim.plist",
-	Fire_PNG: "res/fires/fireanim.png",
+    Fire_PLIST: "res/anim/fires/fireanim.plist",
+	Fire_PNG: "res/anim/fires/fireanim.png",
 	//pet animation
 	pet0_PLIST: "res/anim/pet0/pet0.plist",
-	pet0_PNG: "res/anim/pet0/pet0.png"
-	
+	pet0_PNG: "res/anim/pet0/pet0.png",
+	//lighter animation
+	Lighter_PLIST: "res/anim/lighter/lighter.plist",
+	Lighter_PNG: "res/anim/lighter/lighter.png",
+	//test tsum
+	TSUM3_PNG: "res/tsum/tsum3.png"
 
     
 };

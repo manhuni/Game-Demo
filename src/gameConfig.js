@@ -1,18 +1,18 @@
 //config for game
 var gameConfig = {
     INDEX: {
-        HOMELAYER_INDEX: 0,
-        GAMELAYER_INDEX: 1,
-        MENULAYER_INDEX: 3,
-        JOINER_INDEX: 4,
+        HOMELAYER_INDEX: 5,
+        GAMELAYER_INDEX: 10,
+        MENULAYER_INDEX: 15,
+        JOINER_INDEX: 20,
         DEBBUGLAYER_INDEX: 5555555555555,
-        ANIMATION_INDEX: 6,
-        EFFECTNODE_INDEX: 7,
-        ANIMATIONPET_INDEX: 7,
-        EFFECTNODE_JOIN_INDEX: 8,
-        EFFECTNODE_FIRE_INDEX: 9,
-        SEGMENT_LABEL_INDEX: 10,
-        SHUFFLE_INDEX: 11
+        ANIMATION_INDEX: 30,
+        EFFECTNODE_INDEX: 35,
+        ANIMATIONPET_INDEX: 40,
+        EFFECTNODE_JOIN_INDEX: 45,
+        EFFECTNODE_FIRE_INDEX: 50,
+        SEGMENT_LABEL_INDEX: 55,
+        SHUFFLE_INDEX: 60
     },
     TAG: {
         FIRE_ANIM: 0,
@@ -25,10 +25,10 @@ var gameConfig = {
         PETS: 20 //pixel
     },
     SCALE: {
-        JOINER_FIXED_SCALEX: 0.3,
-        JOINER_FIXED_SCALEY: 0.7,
-        FIREANIM_SCALEX: 1.03,
-        FIREANIM_SCALEY: 1.05
+        JOINER_FIXED_SCALEX: 0.60,
+        JOINER_FIXED_SCALEY: 0.60,
+        FIREANIM_SCALEX: 0.25,
+        FIREANIM_SCALEY: 0.25
     }
 
 
@@ -74,9 +74,9 @@ var typeTestOfPet = [
     'tsum10',
     'tsum10',
     'tsum10',
-    'tsum10',
-    'tsum10',
-    'tsum10'
+    'tsum7',
+    'tsum8',
+    'tsum9'
     
 ];
 
@@ -90,9 +90,11 @@ var joinerConfig = {
 };
 var startWithType = 5555;
 var maxCols = 7;
-var originalHorz = 100;
+var maxRows = 5;
 
-var pettile = 120;
+var offSetPetX = 5;
+var offSetPetY = 5;
+
 var shuffleObj = {
     _stepShuffle: 6.1,
     _timesShuffle: 0,
@@ -102,4 +104,5 @@ var shuffleObj = {
     _firstRotate: true,
     _endRotate: false,
     _rotary: []
-}
+};
+var PTM_RATIO = 32;

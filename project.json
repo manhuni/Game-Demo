@@ -9,17 +9,20 @@
     "renderMode" : 0,
     "engineDir":"frameworks/cocos2d-html5",
 
-    "modules" : ["cocos2d","chipmunk","extensions"],
+    "modules" : ["cocos2d","chipmunk","box2d","extensions", "external"],
 
     "jsList" : [
         "src/resource.js",
         "src/gameConfig.js",
+        "src/GlobalUltils.js",
         "src/app.js",
         "src/GameScene.js",
+        "src/PetMouseListener.js",
         "src/PetsSprite.js",
         "src/JoinerSprite.js",
         "src/FireSprite.js",
         "src/PetAnimationSprite.js",
+        "src/LighterSprite.js",
         "src/EffectLayer.js"
     ]
 }

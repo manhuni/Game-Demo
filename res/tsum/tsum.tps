@@ -181,16 +181,16 @@
         </struct>
         <key>individualSpriteSettings</key>
         <map type="IndividualSpriteSettingsMap">
-            <key type="filename">../joiner_block/joinblock.png</key>
+            <key type="filename">../joinblock.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
                 <key>scale9Enabled</key>
                 <false/>
                 <key>scale9Borders</key>
-                <rect>45,8,90,15</rect>
+                <rect>16,16,32,32</rect>
                 <key>scale9Paddings</key>
-                <rect>45,8,90,15</rect>
+                <rect>16,16,32,32</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
@@ -231,7 +231,7 @@
             <filename>tsum7.png</filename>
             <filename>tsum8.png</filename>
             <filename>tsum9.png</filename>
-            <filename>../joiner_block/joinblock.png</filename>
+            <filename>../joinblock.png</filename>
         </array>
         <key>ignoreFileList</key>
         <array/>

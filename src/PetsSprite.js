@@ -1,9 +1,7 @@
-var PetSprite = cc.PhysicsSprite.extend({
+var PetSprite = cc.Sprite.extend({
     typeLabel: null,//should remove when finish check
     isVisited: false,
     colorType: null,
-    collision_type: 0,
-    tmpBlocked: false,
     gameGroup: gameConfig.GAMEGROUP.PET,
     ctor: function(img) {
         this._super();

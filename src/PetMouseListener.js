@@ -4,6 +4,8 @@ var PetMouseListener = cc.EventListener.create({
     swallowTouches: true,
     onTouchBegan: function(touch, event) {
         var gameLayer = event.getCurrentTarget();
+        //when detect user click, game will unregister schedule
+        gameLayer._allowedHint = false;
         //08.03.2019//click
         var allChildenOfGameLayer = gameLayer._children;
         // position of all pets and filter only pets
@@ -160,7 +162,6 @@ var PetMouseListener = cc.EventListener.create({
         gameLayer._effectNode.petEffected = [];
         gameLayer._effectNode._counterSegment = 0;
         //un register/remove all handle listenner
-
         return false;
     }
 });

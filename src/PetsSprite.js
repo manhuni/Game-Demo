@@ -2,6 +2,7 @@ var PetSprite = cc.Sprite.extend({
     typeLabel: null,//should remove when finish check
     isVisited: false,
     colorType: null,
+    hinted: false,
     gameGroup: gameConfig.GAMEGROUP.PET,
     ctor: function(img) {
         this._super();
@@ -11,8 +12,8 @@ var PetSprite = cc.Sprite.extend({
         this.initWithSpriteFrameName(img);
         this.opacity = 240;
         //test type visual(checked!)
-        this.typeLabel = new cc.LabelTTF("", "Arial", 38);
-        this.typeLabel.setPosition(cc.p(this.width/2,this.height/2));
+        this.typeLabel = new cc.LabelTTF("", "Arial", 58);
+        this.typeLabel.setPosition(cc.p(this.width/2,0));
         this.addChild(this.typeLabel);
         
     }   

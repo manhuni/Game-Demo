@@ -1,12 +1,17 @@
-var GameLayer = cc.Layer.extend({
+var GameLayer = cc.Layer.extend({ 
     world: null, //contain all physic
     _debugNode: null, //show element physics
-    _showDebugger: false,
+    _showDebugger: true,
     _effectNode: null,
     _allOfPets: [],
+    _colorTypeArray: [],
     _testMode: false,
     _commontype: startWithType,
     _shuffle: shuffleObj,
+    _hintedColor: [],
+    _allowedHint: true,
+    _timeAddHint: 3,//3 second
+    _timeLastedHint: 0,
     ctor: function() {
         this._super();
         this.init();
@@ -36,50 +41,54 @@ var GameLayer = cc.Layer.extend({
 
         //create polygonshape for multifixture
 
-        var rows = 7;
+        var rows = 6;
         var cols = 7;
 
         var PetProperties = [];
-        for(var i = 0; i<rows; i++){
+        for (var i = 0; i < rows; i++) {
             PetProperties[i] = [];
-            for(var j = 0; j<cols; j++){
+            for (var j = 0; j < cols; j++) {
                 // var scale = Math.floor(Math.random() * (1.2 - 0.5 + 1)) + 0.5;
                 var scale = 1.0;
-                var mass = Math.floor(Math.random() * (massOfPets.length-1 - 0 + 1)) + 0;
+                var mass = Math.floor(Math.random() * (massOfPets.length - 1 - 0 + 1)) + 0;
                 var json = 'random';
                 var style = 'dynamic';
-                var property = this.createPetObject(mass,scale,json,style);
+                var property = this.createPetObject(mass, scale, json, style);
                 PetProperties[i].push(property);
             }
         };
         //
 
-        var startX = 50; var startY = size.height/2-220;
+        var startX = 50;
+        var startY = size.height / 2 - 220;
         var loadedPet = [];
 
-        for(var i = 0; i<PetProperties.length; i++){
+        for (var i = 0; i < PetProperties.length; i++) {
 
             loadedPet[i] = [];
 
-            for(var j = 0; j<PetProperties[i].length;j++){
+            for (var j = 0; j < PetProperties[i].length; j++) {
 
                 var pet = PetProperties[i][j].sprite;
                 var s = pet.getBoundingBox();
-                var posArray = this.createDataPosition(s,startX,startY);
-                var index = Math.floor(Math.random() * (posArray[i].length-1 - 0 + 1)) + 0;
+                var posArray = this.createDataPosition(s, startX, startY);
+                var index = Math.floor(Math.random() * (posArray[i].length - 1 - 0 + 1)) + 0;
 
-                if(loadedPet[i].includes(index)){
-                    index = findOtherPosition(index,posArray[i],loadedPet[i]);
+                if (loadedPet[i].includes(index)) {
+                    index = findOtherPosition(index, posArray[i], loadedPet[i]);
                 };
                 var pos = posArray[i][index];
 
                 loadedPet[i].push(index);
-                this.createMultiPolygonEntity(PetProperties[i][j],pos);
+                this.createMultiPolygonEntity(PetProperties[i][j], pos);
             }
         };
 
         //listen mouse event click on gameLayer
         cc.eventManager.addListener(PetMouseListener, this);
+        //update for hint color same type random pet, after 3 seconds program will auto find random color to hint
+        //this hint will diable when user click, wait if user don't click after 3s then hint
+        
         //need update for physics requirement
         this.scheduleUpdate();
     },
@@ -88,28 +97,28 @@ var GameLayer = cc.Layer.extend({
         var size = cc.director.getWinSize();
         //background image
         var size = cc.director.getWinSize();
-        var GameBackground = cc.Sprite.create(res.gameBackground);
-        GameBackground.setPosition(cc.p(size.width/2, size.height / 2));
-        this.addChild(GameBackground, gameConfig.INDEX.ANIMATIONPET_INDEX);
+        // var GameBackground = cc.Sprite.create(res.gameBackground);
+        // GameBackground.setPosition(cc.p(size.width / 2, size.height / 2));
+        // this.addChild(GameBackground, gameConfig.INDEX.ANIMATIONPET_INDEX);
         // end test
 
         //add shuffle button
         //2.create a menu and assign onPlay event callback to it
-        var norShuffle = cc.Sprite.create(res.Shuffle_Button_Nor);
-        var selShuffle = cc.Sprite.create(res.Shuffle_Button_Sel);
-        //test mode
-        norShuffle.scale = selShuffle.scale = 0.8;
-        var menuItemShuffle = cc.MenuItemSprite.create(norShuffle, selShuffle, this.shuffleAllPhysics, this);
+        // var norShuffle = cc.Sprite.create(res.Shuffle_Button_Nor);
+        // var selShuffle = cc.Sprite.create(res.Shuffle_Button_Sel);
+        // //test mode
+        // norShuffle.scale = selShuffle.scale = 0.8;
+        // var menuItemShuffle = cc.MenuItemSprite.create(norShuffle, selShuffle, this.shuffleAllPhysics, this);
 
-        var menu = cc.Menu.create(menuItemShuffle);
-        menu.setPosition(size.width - 50, 75);
-        this.addChild(menu, gameConfig.INDEX.SHUFFLE_INDEX);
+        // var menu = cc.Menu.create(menuItemShuffle);
+        // menu.setPosition(size.width - 50, 75);
+        // this.addChild(menu, gameConfig.INDEX.SHUFFLE_INDEX);
         //create inner background
         // var sprite = cc.Sprite.create(res.gameBackground_inner);
         // sprite.setPosition(cc.p(size.width / 2, size.height / 2));
         // this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
         //create a animation effect pet
-        
+
     },
     initPhysicsWorld: function() {
         var screenSize = cc.director.getWinSize();
@@ -124,15 +133,15 @@ var GameLayer = cc.Layer.extend({
             b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
             b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
         var gravity = new b2Vec2(0, -9.8);
-        this.world = new b2World(gravity, true); //true allow sleep
+        this.world = new b2World(gravity, false); //true allow sleep
         this.world.SetContinuousPhysics(true);
         //official
         var fixDef = new b2FixtureDef;
         fixDef.userData = null;
         fixDef.isSensor = false;
-        fixDef.density = 100.0;
+        fixDef.density = 5.0;
         fixDef.friction = 0.5;
-        fixDef.restitution = 0.2;
+        fixDef.restitution = 0.1;
 
         var bodyDef = new b2BodyDef;
         bodyDef.angularDamping = 0;
@@ -158,76 +167,70 @@ var GameLayer = cc.Layer.extend({
         this.world.CreateBody(bodyDef).CreateFixture(fixDef);
         //end official
 
-        return {
-            name: 'BounderGame'
-                // bodyDef: bodyDef,
-                // fixDef: fixDef
-        }
     },
     shuffleAllPhysics: function() {
-        // cc.log("Before");
         // cc.log(this.space.constraints);
-        var _this = this;
-        this._shuffle._timesShuffle++;
+        // var _this = this;
+        // this._shuffle._timesShuffle++;
 
-        if (this._shuffle._firstRotate) {
-            this._shuffle._firstRotate = false
-            for (var i = 0; i < this._children.length; i++) {
-                if (_this._children[i].gameGroup != 0) {
-                    continue;
-                } else {
+        // if (this._shuffle._firstRotate) {
+        //     this._shuffle._firstRotate = false
+        //     for (var i = 0; i < this._children.length; i++) {
+        //         if (_this._children[i].gameGroup != 0) {
+        //             continue;
+        //         } else {
 
-                    var physicsSprite = _this._children[i];
-                    var body = physicsSprite.body;
+        //             var physicsSprite = _this._children[i];
+        //             var body = physicsSprite.body;
 
-                    var motor = new cp.SimpleMotor(_this.space.staticBody, body, _this._shuffle._startForce);
+        //             var motor = new cp.SimpleMotor(_this.space.staticBody, body, _this._shuffle._startForce);
 
-                    _this.space.addConstraint(motor);
-                    _this._shuffle._rotary.push({
-                        target: body,
-                        constraint: motor,
-                    });
+        //             _this.space.addConstraint(motor);
+        //             _this._shuffle._rotary.push({
+        //                 target: body,
+        //                 constraint: motor,
+        //             });
 
-                }
-            };
-        } else {
-            _this._shuffle._startForce = _this._shuffle._startForce + 3;
-            cc.log("start", _this._shuffle._startForce)
+        //         }
+        //     };
+        // } else {
+        //     _this._shuffle._startForce = _this._shuffle._startForce + 3;
+        //     cc.log("start", _this._shuffle._startForce)
 
-            if (_this._shuffle._startForce < _this._shuffle._maxForce) {
-                cc.log("Oh");
-                // // // cc.log("Haha",_this._shuffle._rotary)
-                for (var i = 0; i < _this._shuffle._rotary.length; i++) {
-                    // _this.space.removeConstraint(_this._shuffle._rotary[i].constraint); 
-                    _this._shuffle._rotary[i].constraint.rate = _this._shuffle._startForce;
-                    cc.log("Hu", _this._shuffle._startForce)
-                };
-            };
-        }
-        if (this._shuffle._timesShuffle > this._shuffle._timesShuffleMax) {
-            for (var i = 0; i < _this._shuffle._rotary.length; i++) {
-                _this.space.removeConstraint(_this._shuffle._rotary[i]["constraint"]);
-                _this._shuffle._rotary[i]["target"].constraintList = null;
+        //     if (_this._shuffle._startForce < _this._shuffle._maxForce) {
+        //         cc.log("Oh");
+        //         // // // cc.log("Haha",_this._shuffle._rotary)
+        //         for (var i = 0; i < _this._shuffle._rotary.length; i++) {
+        //             // _this.space.removeConstraint(_this._shuffle._rotary[i].constraint); 
+        //             _this._shuffle._rotary[i].constraint.rate = _this._shuffle._startForce;
+        //             cc.log("Hu", _this._shuffle._startForce)
+        //         };
+        //     };
+        // }
+        // if (this._shuffle._timesShuffle > this._shuffle._timesShuffleMax) {
+        //     for (var i = 0; i < _this._shuffle._rotary.length; i++) {
+        //         _this.space.removeConstraint(_this._shuffle._rotary[i]["constraint"]);
+        //         _this._shuffle._rotary[i]["target"].constraintList = null;
 
-            };
-            _this._shuffle._firstRotate = true;
-            _this._shuffle._startForce = 2;
-            _this._shuffle._timesShuffle = 0;
-            _this._shuffle._rotary = [];
+        //     };
+        //     _this._shuffle._firstRotate = true;
+        //     _this._shuffle._startForce = 2;
+        //     _this._shuffle._timesShuffle = 0;
+        //     _this._shuffle._rotary = [];
 
-        };
+        // };
 
-        setTimeout(function() {
-            for (var i = 0; i < _this._shuffle._rotary.length; i++) {
-                _this.space.removeConstraint(_this._shuffle._rotary[i]["constraint"]);
-                _this._shuffle._rotary[i]["target"].constraintList = null;
-            };
-            _this._shuffle._firstRotate = true;
-            _this._shuffle._startForce = 2;
-            _this._shuffle._timesShuffle = 0;
-            _this._shuffle._rotary = [];
+        // setTimeout(function() {
+        //     for (var i = 0; i < _this._shuffle._rotary.length; i++) {
+        //         _this.space.removeConstraint(_this._shuffle._rotary[i]["constraint"]);
+        //         _this._shuffle._rotary[i]["target"].constraintList = null;
+        //     };
+        //     _this._shuffle._firstRotate = true;
+        //     _this._shuffle._startForce = 2;
+        //     _this._shuffle._timesShuffle = 0;
+        //     _this._shuffle._rotary = [];
 
-        }, 3000);
+        // }, 3000);
     },
     showPhysicWorld: function(visiable) {
         //add debug for node
@@ -261,24 +264,16 @@ var GameLayer = cc.Layer.extend({
             this.debugDraw.SetFillAlpha(0.3);
             this.debugDraw.SetLineThickness(1.0);
             //
-            console.log(this.debugDraw);
-
             var b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
             this.debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit | b2DebugDraw.e_edgeShape);
             this.world.SetDebugDraw(this.debugDraw);
-
-            console.log(scale);
-        }
+        };
     },
     update: function(dt) {
-        var velocityIterations = 8;
+        var velocityIterations = 10;
         var positionIterations = 1;
-
-        // Instruct the world to perform a single step of simulation. It is
-        // generally best to keep the time step and iterations fixed.
         this.world.Step(dt, velocityIterations, positionIterations);
 
-        //Iterate over the bodies in the physics world
         for (var b = this.world.GetBodyList(); b; b = b.GetNext()) {
             if (b.GetUserData() != null) {
                 //Synchronize the AtlasSprites position and rotation with the corresponding body
@@ -286,10 +281,22 @@ var GameLayer = cc.Layer.extend({
                 bodies.x = b.GetPosition().x * PTM_RATIO;
                 bodies.y = b.GetPosition().y * PTM_RATIO;
                 bodies.rotation = -1 * cc.radiansToDegrees(b.GetAngle());
-            }
-        } //
+            };
+        };
         this.world.DrawDebugData();
         this.world.ClearForces();
+        //update
+        this._timeLastedHint += dt;
+        if(this._timeLastedHint > this._timeAddHint){
+
+            if(this._allowedHint){
+                this.hintSameColor();
+                this._timeLastedHint = 0;
+            }else
+            {
+                this._timeLastedHint = 0;
+            };
+        };
     }
 });
 var GameScene = cc.Scene.extend({
@@ -316,25 +323,24 @@ GameLayer.prototype.findPetHaveAlreadyJoin = function(gameLayer, touchPosition, 
     };
 };
 
-GameLayer.prototype.createDataPosition = function(s,startX,startY) {
+GameLayer.prototype.createDataPosition = function(s, startX, startY) {
     var pos = [];
-    for(var i = 0; i<maxRows; i++){
+    for (var i = 0; i < maxRows; i++) {
         pos[i] = [];
-        for(var j = 0; j<maxCols; j++){
-            var x = startX + offSetPetX + j*s.width;
-            var y = startY + offSetPetY + i*s.height;
-            pos[i].push(cc.p(x,y));
+        for (var j = 0; j < maxCols; j++) {
+            var x = startX + offSetPetX + j * s.width;
+            var y = startY + offSetPetY + i * s.height;
+            pos[i].push(cc.p(x, y));
         }
     };
     return pos;
 };
-GameLayer.prototype.createPetObject = function(mass,scale,jsonPath, style) {
+GameLayer.prototype.createPetObject = function(mass, scale, jsonPath, style) {
 
     var size = cc.director.getWinSize();
     //Math.floor(Math.random() * (max - min + 1)) + min;
-    // var resourcePet = typeOfPet[Math.floor(Math.random() * ((typeOfPet.length - 1) - 0 + 1)) + 0];
-    var resourcePet = typeTestOfPet[Math.floor(Math.random() * ((typeTestOfPet.length - 1) - 0 + 1)) + 0];
-
+    var resourcePet = typeOfPet[Math.floor(Math.random() * ((typeOfPet.length - 1) - 0 + 1)) + 0];
+    // var resourcePet = typeTestOfPet[Math.floor(Math.random() * ((typeTestOfPet.length - 1) - 0 + 1)) + 0];
     var json = null;
     var image = null;
     var colorType = null;
@@ -349,13 +355,13 @@ GameLayer.prototype.createPetObject = function(mass,scale,jsonPath, style) {
 
     return {
         json: json,
-        image:image,
+        image: image,
         mass: mass,
         style: style,
         sprite: sprite
     };
 };
-GameLayer.prototype.createMultiPolygonEntity = function(object,pos) {
+GameLayer.prototype.createMultiPolygonEntity = function(object, pos) {
 
     var size = cc.director.getWinSize();
     var b2Vec2 = Box2D.Common.Math.b2Vec2,
@@ -403,6 +409,7 @@ GameLayer.prototype.createMultiPolygonEntity = function(object,pos) {
             bodyDef.type = b2Body.b2_dynamicBody;
             sprite.colorType = colorType;
             sprite.isVisited = false;
+            sprite.hinted = false;
         } else {
             bodyDef.type = b2Body.b2_staticBody;
         }
@@ -414,8 +421,8 @@ GameLayer.prototype.createMultiPolygonEntity = function(object,pos) {
         for (var i = 0; i < eachPolygon.length; i++) {
             var fixDef = new b2FixtureDef;
             fixDef.density = object.mass;
-            fixDef.friction = 10.1;
-            fixDef.restitution = 0.01;
+            fixDef.friction = 0.5;
+            fixDef.restitution = 0.2;
             fixDef.shape = new b2PolygonShape;
             fixDef.shape.SetAsArray(eachPolygon[i], eachPolygon[i].length);
             body.CreateFixture(fixDef);
@@ -432,17 +439,6 @@ GameLayer.prototype.createMultiPolygonEntity = function(object,pos) {
         cc.log(error);
     })
 };
-// GameLayer.prototype.createDataPos = function(object){
-//     cc.log(object);
-//     for(var i = 0; i<maxRows; i++){
-//      for(var j = 0; j<maxCols; j++){
-
-//          var x = startX + offSetPetX + sizeOfPetX;
-//          var y = startY + offSetPetY + sizeOfPetY;
-        
-//      }
-//     }
-// };
 GameLayer.prototype.loadAllVerticesFromJson = function(json) {
     return new Promise(function(resolve, reject) {
         cc.loader.loadJson(json, function(error, data) {
@@ -455,7 +451,8 @@ GameLayer.prototype.loadAllVerticesFromJson = function(json) {
         })
     })
 };
-GameLayer.prototype.createGround = function(object){
+
+GameLayer.prototype.createGround = function(object) {
     var size = cc.director.getWinSize();
     var b2Vec2 = Box2D.Common.Math.b2Vec2,
         b2BodyDef = Box2D.Dynamics.b2BodyDef,
@@ -492,29 +489,183 @@ GameLayer.prototype.createGround = function(object){
                     x,
                     y
                 });
-            }
+            };
         };
         // define a body def
         var bodyDef = new b2BodyDef;
         bodyDef.type = b2Body.b2_staticBody;
         bodyDef.position.Set(object.position.x / PTM_RATIO, object.position.y / PTM_RATIO);
         bodyDef.userData = null;
-        _this.removeChild(sprite,true);
+        _this.removeChild(sprite, true);
 
         var body = _this.world.CreateBody(bodyDef);
         // define a fixture def
         for (var i = 0; i < eachPolygon.length; i++) {
             var fixDef = new b2FixtureDef;
             fixDef.density = object.mass;
-            fixDef.friction = 10.1;
+            fixDef.friction = 0.5;
             fixDef.restitution = 0.1;
             fixDef.shape = new b2PolygonShape;
             fixDef.shape.SetAsArray(eachPolygon[i], eachPolygon[i].length);
             body.CreateFixture(fixDef);
-        }//
+        }; //
 
     }).catch(function(error) {
         cc.log("We can't load json file, please check again ...");
         cc.log(error);
     })
+};
+GameLayer.prototype.hintSameColor = function() {
+    //reset all status
+    if(this._allowedHint == false) return;
+    for (var i = 0; i < this._allOfPets.length; i++) {
+
+        this._allOfPets[i].sprite.hinted = false;
+        this._allOfPets[i].sprite.opacity = 255;
+        this._allOfPets[i].sprite.setTypeLabel("");
+
+    };
+
+    //de dam bao rang moi luc hint ty le trung 100% thi bat buoc object nay phai dang colision
+    //bay gio phai check tat ca cac doi tuong dang colision voi nhau ma cung mau
+    var firstObj = null;
+    var randomPet = [];
+    var index = 0;
+    for (var i = 0; i < this._allOfPets.length; i++) {
+
+        var childrens = this.getColorArrayRandom(this._allOfPets[i].sprite);
+
+        if (childrens.length > 0) {
+            randomPet[index] = [];
+            randomPet[index].push(this._allOfPets[i].sprite);
+            for (var j = 0; j < childrens.length; j++) {
+                randomPet[index].push(childrens[j]);
+            }
+            index++;
+        };
+    };
+    //random array pet
+    //
+    if (this._allOfPets && randomPet.length > 0) {
+        for (var i = 0; i < randomPet.length; i++) {
+            for (var j = 0; j < randomPet[i].length; j++) {
+                var pet = randomPet[i][j];
+                if (!this._colorTypeArray.includes(pet.colorType)) {
+                    this._colorTypeArray.push(pet.colorType);
+                };
+            }
+        };
+    };
+    cc.log(randomPet.length,"randomPet.length");
+    if (randomPet.length > 0) {
+
+        firstObj = this.createAHintedColor(randomPet);
+        //
+        firstObj.setName("Root");
+        firstObj.opacity = 50;
+        var pathToLeaf = [];
+        //loop all pet, stucking here but must done
+        this.findNeighbour(firstObj, pathToLeaf);
+    };
+};
+GameLayer.prototype.createAHintedColor = function(array) {
+
+    var index = 0;
+    var color = 0;
+    var count = 0;
+    do {
+        index = Math.floor(Math.random() * (array.length - 1 - 0 + 1)) + 0;
+        target = array[index][0];
+        color = target.colorType;
+        count++;
+    }
+    while (this._hintedColor.includes(color) && count<3);
+
+    this._hintedColor.push(color);
+    if (this._hintedColor.length == this._colorTypeArray.length) {
+
+        cc.log("Reseting!\nReach to max color clickable ... ");
+        this._hintedColor.splice(0, this._hintedColor.length);
+    };
+    return target;
+};
+
+GameLayer.prototype.getColorArrayRandom = function(node) {
+    var childrens = [];
+    for (var i = 0; i < this._allOfPets.length; i++) {
+        var startObj = node;
+        var s = startObj.getBoundingBox();
+        var originRange = s.width / 2;
+        var bonusLength = s.width / 2;
+        var totalRange = originRange + bonusLength;
+        var dist = cc.pDistance(startObj.getPosition(), this._allOfPets[i].sprite.getPosition());
+        if (dist > originRange && dist < totalRange) {
+            if (this._allOfPets[i].sprite.colorType === node.colorType) {
+                childrens.push(this._allOfPets[i].sprite);
+            };
+        };
+    };
+    return childrens;
+};
+
+GameLayer.prototype.findNeighbour = function(branch, path) {
+    if (!path.includes(branch)) {
+        path.push(branch);
+    };
+    var childrens = [];
+    var s = branch.getBoundingBox();
+    var originRange = s.width / 2;
+    var bonusLength = s.width / 2;
+    var totalRange = originRange + bonusLength;
+
+    for (var i = 0; i < this._allOfPets.length; i++) {
+        var dist = cc.pDistance(branch.getPosition(), this._allOfPets[i].sprite.getPosition());
+        if (dist > originRange && dist < totalRange) {
+            if (this._allOfPets[i].sprite.colorType === branch.colorType && branch != this._allOfPets[i].sprite && this._allOfPets[i].sprite.hinted != true) {
+                this._allOfPets[i].sprite.hinted = true;
+                childrens.push(this._allOfPets[i].sprite);
+            };
+        };
+    };
+    // debugger
+    if (childrens.length > 0) {
+        for (var i = 0; i < childrens.length; i++) {
+            if (!path.includes(childrens[i])) {
+                path.push(childrens[i]);
+            };
+        };
+        for (var i = 0; i < childrens.length; i++) {
+            this.findNeighbour(childrens[i], path);
+        };
+    };
+    if (childrens.length == 0) {
+        for (var i = 0; i < path.length; i++) {
+            path[i].setTypeLabel(`${i}`);
+        };
+    };
+
+};
+
+GameLayer.prototype.getChilds = function(node) {
+    node.hinted = true;
+    var childrens = [];
+
+    for (var i = 0; i < this._allOfPets.length; i++) {
+        var startObj = node;
+        var s = startObj.getBoundingBox();
+        var originRange = s.width / 2;
+        var bonusLength = s.width / 2;
+        var totalRange = originRange + bonusLength;
+        var dist = cc.pDistance(startObj.getPosition(), this._allOfPets[i].sprite.getPosition());
+        if (dist > originRange && dist < totalRange) {
+            if (this._allOfPets[i].sprite.colorType === node.colorType && node != this._allOfPets[i].sprite && this._allOfPets[i].sprite.hinted != true) {
+
+                this._allOfPets[i].sprite.hinted = true;
+                this._allOfPets[i].sprite.setName(`childrens ${i}`);
+                childrens.push(this._allOfPets[i].sprite);
+            };
+        };
+    };
+
+    return childrens;
 };

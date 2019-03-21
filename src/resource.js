@@ -72,7 +72,9 @@ var res = {
 	Lighter_PLIST: "res/anim/lighter/lighter.plist",
 	Lighter_PNG: "res/anim/lighter/lighter.png",
 	//test tsum
-	TSUM3_PNG: "res/tsum/tsum3.png"
+	TSUM3_PNG: "res/tsum/tsum3.png",
+	//test particle
+	Particle_PLIST: "res/particles/FireBallHele.plist"
 
     
 };

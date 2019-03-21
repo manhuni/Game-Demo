@@ -90,6 +90,12 @@ var GameLayer = cc.Layer.extend({
         //this hint will diable when user click, wait if user don't click after 3s then hint
 
         //need update for physics requirement
+        
+        var ParticleSprite = new SpellFireSprite();
+        cc.log(ParticleSprite.getPosition())
+        this.addChild(ParticleSprite,100000000000000);
+        var action = cc.moveTo(2, cc.p(size.width/2,size.height));
+        ParticleSprite.runAction(action);
         this.scheduleUpdate();
     },
     init: function() {

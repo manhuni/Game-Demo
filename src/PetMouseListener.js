@@ -21,7 +21,7 @@ var PetMouseListener = cc.EventListener.create({
         for (var i = 0; i < petObject.length; i++) {
             var distClickedWithPets = cc.pDistance(touch.getLocation(), petObject[i].getPosition());
             if (distClickedWithPets < joinerConfig.radiusCanClickedFromCenterPet) {
-                petObject[i].opacity = 255;
+                // petObject[i].opacity = 255;
                 // // increase number of segment(purpose for count limit point, ex: 3 seg then allow clear pet)
                 gameLayer._effectNode._counterSegment = gameLayer._effectNode._counterSegment + 1;
 
@@ -162,6 +162,7 @@ var PetMouseListener = cc.EventListener.create({
         gameLayer._effectNode.petEffected = [];
         gameLayer._effectNode._counterSegment = 0;
         //un register/remove all handle listenner
+        gameLayer._allowedHint = true;
         return false;
     }
 });

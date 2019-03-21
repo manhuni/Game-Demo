@@ -10,7 +10,7 @@ var PetSprite = cc.Sprite.extend({
         cc.spriteFrameCache.addSpriteFrames(res.TSUM_PLIST, res.TSUM_PNG);
         //init with pet
         this.initWithSpriteFrameName(img);
-        this.opacity = 240;
+        this.opacity = 250;
         //test type visual(checked!)
         this.typeLabel = new cc.LabelTTF("", "Arial", 58);
         this.typeLabel.setPosition(cc.p(this.width/2,0));

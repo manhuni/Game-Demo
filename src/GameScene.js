@@ -1,7 +1,7 @@
-var GameLayer = cc.Layer.extend({ 
+var GameLayer = cc.Layer.extend({
     world: null, //contain all physic
     _debugNode: null, //show element physics
-    _showDebugger: true,
+    _showDebugger: false,
     _effectNode: null,
     _allOfPets: [],
     _colorTypeArray: [],
@@ -10,7 +10,7 @@ var GameLayer = cc.Layer.extend({
     _shuffle: shuffleObj,
     _hintedColor: [],
     _allowedHint: true,
-    _timeAddHint: 3,//3 second
+    _timeAddHint: 3, //5 second
     _timeLastedHint: 0,
     ctor: function() {
         this._super();
@@ -41,7 +41,7 @@ var GameLayer = cc.Layer.extend({
 
         //create polygonshape for multifixture
 
-        var rows = 6;
+        var rows = 3;
         var cols = 7;
 
         var PetProperties = [];
@@ -88,7 +88,7 @@ var GameLayer = cc.Layer.extend({
         cc.eventManager.addListener(PetMouseListener, this);
         //update for hint color same type random pet, after 3 seconds program will auto find random color to hint
         //this hint will diable when user click, wait if user don't click after 3s then hint
-        
+
         //need update for physics requirement
         this.scheduleUpdate();
     },
@@ -104,15 +104,15 @@ var GameLayer = cc.Layer.extend({
 
         //add shuffle button
         //2.create a menu and assign onPlay event callback to it
-        // var norShuffle = cc.Sprite.create(res.Shuffle_Button_Nor);
-        // var selShuffle = cc.Sprite.create(res.Shuffle_Button_Sel);
+        var norShuffle = cc.Sprite.create(res.Shuffle_Button_Nor);
+        var selShuffle = cc.Sprite.create(res.Shuffle_Button_Sel);
         // //test mode
-        // norShuffle.scale = selShuffle.scale = 0.8;
-        // var menuItemShuffle = cc.MenuItemSprite.create(norShuffle, selShuffle, this.shuffleAllPhysics, this);
+        norShuffle.scale = selShuffle.scale = 0.8;
+        var menuItemShuffle = cc.MenuItemSprite.create(norShuffle, selShuffle, this.shuffleAllPhysics, this);
 
-        // var menu = cc.Menu.create(menuItemShuffle);
-        // menu.setPosition(size.width - 50, 75);
-        // this.addChild(menu, gameConfig.INDEX.SHUFFLE_INDEX);
+        var menu = cc.Menu.create(menuItemShuffle);
+        menu.setPosition(size.width - 50, 75);
+        this.addChild(menu, gameConfig.INDEX.SHUFFLE_INDEX);
         //create inner background
         // var sprite = cc.Sprite.create(res.gameBackground_inner);
         // sprite.setPosition(cc.p(size.width / 2, size.height / 2));
@@ -139,7 +139,7 @@ var GameLayer = cc.Layer.extend({
         var fixDef = new b2FixtureDef;
         fixDef.userData = null;
         fixDef.isSensor = false;
-        fixDef.density = 5.0;
+        // fixDef.density = 5.0;
         fixDef.friction = 0.5;
         fixDef.restitution = 0.1;
 
@@ -169,68 +169,30 @@ var GameLayer = cc.Layer.extend({
 
     },
     shuffleAllPhysics: function() {
-        // cc.log(this.space.constraints);
-        // var _this = this;
-        // this._shuffle._timesShuffle++;
+        //We need limit speed or velocity limit
+        //A torque equal to T = IV/t I: rotational inertia(quan tinh quay), V: velocity, t is the time we will apply the torque,
+        //refer to http://www.iforce2d.net/b2dtut/rotate-to-angle
+        //>> Rotate all body physic avaiable // maybe activated when hintbody == 0 <<//
+        var timeApplyTorque =  1.0;
+        var desiredAngle = 300*360*Math.PI/180;//how many turn do you want(300 times with 360 degress rotation =))
+        //find all parameter relatively with above formulas
+        for(var i = 0; i<this._allOfPets.length; i++){
+            var body = this._allOfPets[i].body;
 
-        // if (this._shuffle._firstRotate) {
-        //     this._shuffle._firstRotate = false
-        //     for (var i = 0; i < this._children.length; i++) {
-        //         if (_this._children[i].gameGroup != 0) {
-        //             continue;
-        //         } else {
+            var inertia = body.GetInertia();
+            var AV = body.GetAngularVelocity();
+            var totalRotation = desiredAngle - AV;
+            if(totalRotation > 180*Math.PI/180){
+                totalRotation -= 360*Math.PI/180;
+            };
+            if(totalRotation < -180*Math.PI/180){
+                totalRotation += 360*Math.PI/180;
+            };
+            var T = inertia*(totalRotation)/timeApplyTorque;
+            //do it now
+            body.ApplyTorque(T);
+        };
 
-        //             var physicsSprite = _this._children[i];
-        //             var body = physicsSprite.body;
-
-        //             var motor = new cp.SimpleMotor(_this.space.staticBody, body, _this._shuffle._startForce);
-
-        //             _this.space.addConstraint(motor);
-        //             _this._shuffle._rotary.push({
-        //                 target: body,
-        //                 constraint: motor,
-        //             });
-
-        //         }
-        //     };
-        // } else {
-        //     _this._shuffle._startForce = _this._shuffle._startForce + 3;
-        //     cc.log("start", _this._shuffle._startForce)
-
-        //     if (_this._shuffle._startForce < _this._shuffle._maxForce) {
-        //         cc.log("Oh");
-        //         // // // cc.log("Haha",_this._shuffle._rotary)
-        //         for (var i = 0; i < _this._shuffle._rotary.length; i++) {
-        //             // _this.space.removeConstraint(_this._shuffle._rotary[i].constraint); 
-        //             _this._shuffle._rotary[i].constraint.rate = _this._shuffle._startForce;
-        //             cc.log("Hu", _this._shuffle._startForce)
-        //         };
-        //     };
-        // }
-        // if (this._shuffle._timesShuffle > this._shuffle._timesShuffleMax) {
-        //     for (var i = 0; i < _this._shuffle._rotary.length; i++) {
-        //         _this.space.removeConstraint(_this._shuffle._rotary[i]["constraint"]);
-        //         _this._shuffle._rotary[i]["target"].constraintList = null;
-
-        //     };
-        //     _this._shuffle._firstRotate = true;
-        //     _this._shuffle._startForce = 2;
-        //     _this._shuffle._timesShuffle = 0;
-        //     _this._shuffle._rotary = [];
-
-        // };
-
-        // setTimeout(function() {
-        //     for (var i = 0; i < _this._shuffle._rotary.length; i++) {
-        //         _this.space.removeConstraint(_this._shuffle._rotary[i]["constraint"]);
-        //         _this._shuffle._rotary[i]["target"].constraintList = null;
-        //     };
-        //     _this._shuffle._firstRotate = true;
-        //     _this._shuffle._startForce = 2;
-        //     _this._shuffle._timesShuffle = 0;
-        //     _this._shuffle._rotary = [];
-
-        // }, 3000);
     },
     showPhysicWorld: function(visiable) {
         //add debug for node
@@ -287,13 +249,12 @@ var GameLayer = cc.Layer.extend({
         this.world.ClearForces();
         //update
         this._timeLastedHint += dt;
-        if(this._timeLastedHint > this._timeAddHint){
+        if (this._timeLastedHint > this._timeAddHint) {
 
-            if(this._allowedHint){
+            if (this._allowedHint) {
                 this.hintSameColor();
                 this._timeLastedHint = 0;
-            }else
-            {
+            } else {
                 this._timeLastedHint = 0;
             };
         };
@@ -517,11 +478,10 @@ GameLayer.prototype.createGround = function(object) {
 };
 GameLayer.prototype.hintSameColor = function() {
     //reset all status
-    if(this._allowedHint == false) return;
+    if (this._allowedHint == false) return;
     for (var i = 0; i < this._allOfPets.length; i++) {
 
         this._allOfPets[i].sprite.hinted = false;
-        this._allOfPets[i].sprite.opacity = 255;
         this._allOfPets[i].sprite.setTypeLabel("");
 
     };
@@ -545,7 +505,6 @@ GameLayer.prototype.hintSameColor = function() {
         };
     };
     //random array pet
-    //
     if (this._allOfPets && randomPet.length > 0) {
         for (var i = 0; i < randomPet.length; i++) {
             for (var j = 0; j < randomPet[i].length; j++) {
@@ -556,16 +515,18 @@ GameLayer.prototype.hintSameColor = function() {
             }
         };
     };
-    cc.log(randomPet.length,"randomPet.length");
+    //permit hint same color
     if (randomPet.length > 0) {
-
+        //root path
         firstObj = this.createAHintedColor(randomPet);
-        //
         firstObj.setName("Root");
-        firstObj.opacity = 50;
         var pathToLeaf = [];
         //loop all pet, stucking here but must done
         this.findNeighbour(firstObj, pathToLeaf);
+    };
+    //require an action for shuffle pet
+    if (randomPet.length == 0) {
+        cc.log("Please shuffle, we don't find any match same color in this turn ...");
     };
 };
 GameLayer.prototype.createAHintedColor = function(array) {
@@ -579,7 +540,7 @@ GameLayer.prototype.createAHintedColor = function(array) {
         color = target.colorType;
         count++;
     }
-    while (this._hintedColor.includes(color) && count<3);
+    while (this._hintedColor.includes(color) && count < 3); //only permit try to find pet not to over 3 times
 
     this._hintedColor.push(color);
     if (this._hintedColor.length == this._colorTypeArray.length) {
@@ -639,13 +600,23 @@ GameLayer.prototype.findNeighbour = function(branch, path) {
         };
     };
     if (childrens.length == 0) {
+        //here should be run action for same color pet
         for (var i = 0; i < path.length; i++) {
-            path[i].setTypeLabel(`${i}`);
+
+            // path[i].setTypeLabel(`${i}`);
+            this.runHintEffect(path[i]);
+            
+
         };
     };
 
 };
-
+GameLayer.prototype.runHintEffect = function(target){
+        var action2 = cc.tintTo(1.5, 89, 83, 83);
+        var action2Back = cc.tintTo(1.5, -10, -10, -10);
+        var seq = cc.sequence(action2.clone(),action2Back.clone());
+        target.runAction(seq);
+};
 GameLayer.prototype.getChilds = function(node) {
     node.hinted = true;
     var childrens = [];

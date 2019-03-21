@@ -60,8 +60,24 @@ var typeOfPet = [
 ];
 //all test types of pet
 var typeTestOfPet = [
-    'tsum7','tsum7','tsum7','tsum7','tsum7','tsum7','tsum7','tsum7','tsum7','tsum7','tsum7','tsum7'
-    
+    'tsum0',
+    'tsum1',
+    'tsum2',
+    'tsum3',
+    'tsum4',
+    'tsum5',
+    'tsum6',
+    'tsum7',
+    'tsum8',
+    'tsum5',
+    'tsum5',
+    'tsum5',
+    'tsum5',
+    'tsum5',
+    'tsum5',
+    'tsum5',
+    'tsum5',
+    'tsum5'
 ];
 
 var massOfPets = [5,5,5,5,5,5,5,5,5,5,5,
@@ -85,7 +101,7 @@ var massOfPets = [5,5,5,5,5,5,5,5,5,5,5,
 var joinerConfig = {
     permitedJoinerDistance: 128 / 2 / 2,
     radiusCanClickedFromCenterPet: 128 / 3,
-    offsetAngle: 10 //5 degress from path
+    offsetAngle: 20 //5 degress from path
 };
 var startWithType = 5555;
 var maxCols = 7;

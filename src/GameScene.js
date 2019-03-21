@@ -41,7 +41,7 @@ var GameLayer = cc.Layer.extend({
 
         //create polygonshape for multifixture
 
-        var rows = 3;
+        var rows = 4;
         var cols = 7;
 
         var PetProperties = [];
@@ -70,7 +70,7 @@ var GameLayer = cc.Layer.extend({
             for (var j = 0; j < PetProperties[i].length; j++) {
 
                 var pet = PetProperties[i][j].sprite;
-                var s = pet.getBoundingBox();
+                var s = pet.getContentSize();
                 var posArray = this.createDataPosition(s, startX, startY);
                 var index = Math.floor(Math.random() * (posArray[i].length - 1 - 0 + 1)) + 0;
 
@@ -173,22 +173,22 @@ var GameLayer = cc.Layer.extend({
         //A torque equal to T = IV/t I: rotational inertia(quan tinh quay), V: velocity, t is the time we will apply the torque,
         //refer to http://www.iforce2d.net/b2dtut/rotate-to-angle
         //>> Rotate all body physic avaiable // maybe activated when hintbody == 0 <<//
-        var timeApplyTorque =  1.0;
-        var desiredAngle = 300*360*Math.PI/180;//how many turn do you want(300 times with 360 degress rotation =))
+        var timeApplyTorque = 1.0;
+        var desiredAngle = 300 * 360 * Math.PI / 180; //how many turn do you want(300 times with 360 degress rotation =))
         //find all parameter relatively with above formulas
-        for(var i = 0; i<this._allOfPets.length; i++){
+        for (var i = 0; i < this._allOfPets.length; i++) {
             var body = this._allOfPets[i].body;
 
             var inertia = body.GetInertia();
             var AV = body.GetAngularVelocity();
             var totalRotation = desiredAngle - AV;
-            if(totalRotation > 180*Math.PI/180){
-                totalRotation -= 360*Math.PI/180;
+            if (totalRotation > 180 * Math.PI / 180) {
+                totalRotation -= 360 * Math.PI / 180;
             };
-            if(totalRotation < -180*Math.PI/180){
-                totalRotation += 360*Math.PI/180;
+            if (totalRotation < -180 * Math.PI / 180) {
+                totalRotation += 360 * Math.PI / 180;
             };
-            var T = inertia*(totalRotation)/timeApplyTorque;
+            var T = inertia * (totalRotation) / timeApplyTorque;
             //do it now
             body.ApplyTorque(T);
         };
@@ -257,7 +257,7 @@ var GameLayer = cc.Layer.extend({
             } else {
                 this._timeLastedHint = 0;
             };
-        };
+        }; //end hint
     }
 });
 var GameScene = cc.Scene.extend({
@@ -300,8 +300,8 @@ GameLayer.prototype.createPetObject = function(mass, scale, jsonPath, style) {
 
     var size = cc.director.getWinSize();
     //Math.floor(Math.random() * (max - min + 1)) + min;
-    var resourcePet = typeOfPet[Math.floor(Math.random() * ((typeOfPet.length - 1) - 0 + 1)) + 0];
-    // var resourcePet = typeTestOfPet[Math.floor(Math.random() * ((typeTestOfPet.length - 1) - 0 + 1)) + 0];
+    // var resourcePet = typeOfPet[Math.floor(Math.random() * ((typeOfPet.length - 1) - 0 + 1)) + 0];
+    var resourcePet = typeTestOfPet[Math.floor(Math.random() * ((typeTestOfPet.length - 1) - 0 + 1)) + 0];
     var json = null;
     var image = null;
     var colorType = null;
@@ -349,7 +349,7 @@ GameLayer.prototype.createMultiPolygonEntity = function(object, pos) {
         var sprite = object.sprite;
         sprite.setPosition(pos);
         _this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
-        var s = sprite.getBoundingBox();
+        var s = sprite.getContentSize();
 
         //
         var eachPolygon = [];
@@ -437,7 +437,7 @@ GameLayer.prototype.createGround = function(object) {
         var sprite = new cc.Sprite.create(imagePath);
         sprite.setPosition(object.position);
         sprite.scale = object.scale;
-        var s = sprite.getBoundingBox();
+        var s = sprite.getContentSize();
 
         //
         var eachPolygon = [];
@@ -555,7 +555,7 @@ GameLayer.prototype.getColorArrayRandom = function(node) {
     var childrens = [];
     for (var i = 0; i < this._allOfPets.length; i++) {
         var startObj = node;
-        var s = startObj.getBoundingBox();
+        var s = startObj.getContentSize();
         var originRange = s.width / 2;
         var bonusLength = s.width / 2;
         var totalRange = originRange + bonusLength;
@@ -574,21 +574,27 @@ GameLayer.prototype.findNeighbour = function(branch, path) {
         path.push(branch);
     };
     var childrens = [];
-    var s = branch.getBoundingBox();
+    var s = branch.getContentSize();
     var originRange = s.width / 2;
-    var bonusLength = s.width / 2;
+    var bonusLength = s.width + s.width / 2;
     var totalRange = originRange + bonusLength;
 
     for (var i = 0; i < this._allOfPets.length; i++) {
         var dist = cc.pDistance(branch.getPosition(), this._allOfPets[i].sprite.getPosition());
         if (dist > originRange && dist < totalRange) {
+
             if (this._allOfPets[i].sprite.colorType === branch.colorType && branch != this._allOfPets[i].sprite && this._allOfPets[i].sprite.hinted != true) {
                 this._allOfPets[i].sprite.hinted = true;
-                childrens.push(this._allOfPets[i].sprite);
+                var goodToAdd = this.checkOnStraightLine(branch, this._allOfPets[i].sprite);
+                if (goodToAdd != false) {
+                    childrens.push(this._allOfPets[i].sprite);
+                };
             };
+
         };
     };
     // debugger
+    //
     if (childrens.length > 0) {
         for (var i = 0; i < childrens.length; i++) {
             if (!path.includes(childrens[i])) {
@@ -605,17 +611,43 @@ GameLayer.prototype.findNeighbour = function(branch, path) {
 
             // path[i].setTypeLabel(`${i}`);
             this.runHintEffect(path[i]);
-            
+
 
         };
     };
 
 };
-GameLayer.prototype.runHintEffect = function(target){
-        var action2 = cc.tintTo(1.5, 89, 83, 83);
-        var action2Back = cc.tintTo(1.5, -10, -10, -10);
-        var seq = cc.sequence(action2.clone(),action2Back.clone());
-        target.runAction(seq);
+GameLayer.prototype.checkOnStraightLine = function(root, distination) {
+    var rootPos = root.getPosition();
+    var distPos = distination.getPosition();
+
+    var radiusScan = cc.pDistance(rootPos, distPos);
+    var angleRootToDest = cc.radiansToDegrees(Math.atan2(distPos.y - rootPos.y, distPos.x - rootPos.x));
+
+    for (var i = 0; i < this._allOfPets.length; i++) {
+
+        var currentPet = this._allOfPets[i].sprite;
+
+        var currentPos = currentPet.getPosition();
+        var dist = cc.pDistance(rootPos, currentPos);
+
+        var angleRootToInradius = cc.radiansToDegrees(Math.atan2(currentPos.y - rootPos.y, currentPos.x - rootPos.x));
+
+        if (dist > root.getContentSize().width / 2 && dist < radiusScan && currentPet.colorType != root.colorType) {
+            //check angle
+            if ((angleRootToInradius < (angleRootToDest + joinerConfig.offsetAngle)) && (angleRootToInradius > (angleRootToDest - joinerConfig.offsetAngle))) {
+                return false;
+                break;
+            }
+        };
+    };
+
+};
+GameLayer.prototype.runHintEffect = function(target) {
+    var action2 = cc.tintTo(1.5, 89, 83, 83);
+    var action2Back = cc.tintTo(1.5, -10, -10, -10);
+    var seq = cc.sequence(action2.clone(), action2Back.clone());
+    target.runAction(seq);
 };
 GameLayer.prototype.getChilds = function(node) {
     node.hinted = true;
@@ -623,7 +655,7 @@ GameLayer.prototype.getChilds = function(node) {
 
     for (var i = 0; i < this._allOfPets.length; i++) {
         var startObj = node;
-        var s = startObj.getBoundingBox();
+        var s = startObj.getContentSize();
         var originRange = s.width / 2;
         var bonusLength = s.width / 2;
         var totalRange = originRange + bonusLength;

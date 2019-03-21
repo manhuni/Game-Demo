@@ -68,8 +68,8 @@ var PetMouseListener = cc.EventListener.create({
         // Then we need calculate distance between pos of first pet
         // With touch location and compare with position of pets non visited
 
-        var originRange = lastTarget.getBoundingBox().width / 2;
-        var bonusLength = lastTarget.getBoundingBox().width / 2;
+        var originRange = lastTarget.getContentSize().width / 2;
+        var bonusLength = lastTarget.getContentSize().width + lastTarget.getContentSize().width / 2;
         var totalRange = originRange + bonusLength;
 
         var distanceRuntime = cc.pDistance(lastTarget.getPosition(), touch.getLocation());

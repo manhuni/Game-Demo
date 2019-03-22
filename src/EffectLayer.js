@@ -65,7 +65,7 @@ var EffectLayer = cc.Layer.extend({
         }
         // Add new pet
         var startX = 50;
-        var startY = size.height / 2 + 220;
+        var startY = size.height / 2;
         var loadedPet = [];
         //
         for (var i = 0; i < PetProperties.length; i++) {

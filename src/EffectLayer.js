@@ -90,9 +90,10 @@ var EffectLayer = cc.Layer.extend({
         } //end for loop add new pet
         gameLayer._allowedHint = true;
         for(var i = 0; i<allPos.length;i++){
-           var ParticleSprite = new SpellFireSprite();
-           ParticleSprite.setPosition(allPos[i]);
-           gameLayer.addChild(ParticleSprite,gameConfig.INDEX.EFFECTNODE_INDEX); 
+           var SpellBall = new SpellFireSprite();
+           SpellBall.setPosition(allPos[i]);
+           gameLayer.addChild(SpellBall,gameConfig.INDEX.EFFECTNODE_INDEX);
+           SpellBall.fly();
         };
     },
     getRandomPos: function(rows, cols, verticalPos, originalHorz) {

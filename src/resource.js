@@ -74,7 +74,7 @@ var res = {
 	//test tsum
 	TSUM3_PNG: "res/tsum/tsum3.png",
 	//test particle
-	Particle_PLIST: "res/particles/FireBallHele.plist"
+	Particle_PLIST: "res/particles/SpellBall.plist"
 
     
 };

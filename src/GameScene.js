@@ -128,16 +128,7 @@ var GameLayer = cc.Layer.extend({
     },
     initPhysicsWorld: function() {
         var screenSize = cc.director.getWinSize();
-        var b2Vec2 = Box2D.Common.Math.b2Vec2,
-            b2BodyDef = Box2D.Dynamics.b2BodyDef,
-            b2Body = Box2D.Dynamics.b2Body,
-            b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
-            b2Fixture = Box2D.Dynamics.b2Fixture,
-            b2World = Box2D.Dynamics.b2World,
-            b2MassData = Box2D.Collision.Shapes.b2MassData,
-            b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
-            b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
-            b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
+        
         var gravity = new b2Vec2(0, -9.8);
         this.world = new b2World(gravity, false); //true allow sleep
         this.world.SetContinuousPhysics(true);
@@ -331,17 +322,6 @@ GameLayer.prototype.createPetObject = function(mass, scale, jsonPath, style) {
 GameLayer.prototype.createMultiPolygonEntity = function(object, pos) {
 
     var size = cc.director.getWinSize();
-    var b2Vec2 = Box2D.Common.Math.b2Vec2,
-        b2BodyDef = Box2D.Dynamics.b2BodyDef,
-        b2Body = Box2D.Dynamics.b2Body,
-        b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
-        b2Fixture = Box2D.Dynamics.b2Fixture,
-        b2World = Box2D.Dynamics.b2World,
-        b2MassData = Box2D.Collision.Shapes.b2MassData,
-        b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
-        b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
-        b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
-
     var jsonPath = object.json;
     var _this = this;
 
@@ -421,16 +401,6 @@ GameLayer.prototype.loadAllVerticesFromJson = function(json) {
 
 GameLayer.prototype.createGround = function(object) {
     var size = cc.director.getWinSize();
-    var b2Vec2 = Box2D.Common.Math.b2Vec2,
-        b2BodyDef = Box2D.Dynamics.b2BodyDef,
-        b2Body = Box2D.Dynamics.b2Body,
-        b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
-        b2Fixture = Box2D.Dynamics.b2Fixture,
-        b2World = Box2D.Dynamics.b2World,
-        b2MassData = Box2D.Collision.Shapes.b2MassData,
-        b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
-        b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
-        b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
 
     var jsonPath = object.json;
     var _this = this;

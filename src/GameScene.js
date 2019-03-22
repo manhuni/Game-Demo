@@ -137,9 +137,9 @@ var GameLayer = cc.Layer.extend({
         var fixDef = new b2FixtureDef;
         fixDef.userData = null;
         fixDef.isSensor = false;
-        fixDef.density = 100.0;
+        fixDef.density = 500.0;
         fixDef.friction = 0.1;
-        fixDef.restitution = 0.1;
+        fixDef.restitution = 0.0;
 
         var bodyDef = new b2BodyDef;
         bodyDef.angularDamping = 0;
@@ -333,7 +333,6 @@ GameLayer.prototype.createMultiPolygonEntity = function(object, pos) {
         var colorType = rigidBodies.name;
         var polygons = rigidBodies.polygons;
 
-
         var sprite = object.sprite;
         sprite.setPosition(pos);
         _this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
@@ -352,6 +351,9 @@ GameLayer.prototype.createMultiPolygonEntity = function(object, pos) {
                 });
             }
         };
+        //
+        cc.log(">>ONE<<")
+        cc.log(eachPolygon);
         // define a body def
         var bodyDef = new b2BodyDef;
         if (object.style != 'static') {
@@ -366,23 +368,26 @@ GameLayer.prototype.createMultiPolygonEntity = function(object, pos) {
         bodyDef.userData = sprite;
         var body = _this.world.CreateBody(bodyDef);
         body.SetAngularDamping(0);
-        // body.SetLinearVelocity(0, 0);
-
+        var fixture = [];
         // define a fixture def
+        var dataArea = [];
+        cc.log(eachPolygon);
         for (var i = 0; i < eachPolygon.length; i++) {
             var fixDef = new b2FixtureDef;
-            fixDef.density = object.mass/eachPolygon.length;
+            fixDef.density = Math.floor(object.mass / eachPolygon.length);
             fixDef.friction = 0.1;
-            fixDef.restitution = 0.1;
+            fixDef.restitution = 0.0;
             fixDef.shape = new b2PolygonShape;
             fixDef.shape.SetAsArray(eachPolygon[i], eachPolygon[i].length);
-            var fixture = body.CreateFixture(fixDef);
-            cc.log(fixture);
-            cc.log(object.mass,eachPolygon.length);
-
+            var fixt = body.CreateFixture(fixDef);
+            fixture.push(fixt);
         };
+        // body.SetMassData(object.mass);
+        // cc.log("MassData",body.GetMassData());
+        // body.GetFixtureList().SetDensity(object.mass);
         var finalObj = {
             body: body,
+            fixture: fixture,
             sprite: sprite
         };
         _this._allOfPets.push(finalObj);
@@ -447,7 +452,7 @@ GameLayer.prototype.createGround = function(object) {
             var fixDef = new b2FixtureDef;
             fixDef.density = object.mass;
             fixDef.friction = 0.1;
-            fixDef.restitution = 0.1;
+            fixDef.restitution = 0.0;
             fixDef.shape = new b2PolygonShape;
             fixDef.shape.SetAsArray(eachPolygon[i], eachPolygon[i].length);
             body.CreateFixture(fixDef);
@@ -655,7 +660,7 @@ GameLayer.prototype.getChilds = function(node) {
     return childrens;
 };
 GameLayer.prototype.BeginContactLst = function(contact) {
-    // 
+    //
 };
 GameLayer.prototype.EndContactLst = function(contact) {
     //
@@ -670,20 +675,19 @@ GameLayer.prototype.PostSolveLst = function(contact, impulse) {
     var bodyB = fixtureB.GetBody();
     var userDataBodyA = bodyA.GetUserData();
     var userDataBodyB = bodyB.GetUserData();
-    if((userDataBodyA && userDataBodyB) != null){
-        var maxSpeed = 1.0;
+    if ((userDataBodyA && userDataBodyB) != null) {
+        var maxSpeed = 2.0;
         var velA = bodyA.GetLinearVelocity();
         var velB = bodyB.GetLinearVelocity();
 
-        var speedA = bodyA.GetLinearVelocity().Length();
-        var speedB = bodyB.GetLinearVelocity().Length();
-
-        if(( speedA|| speedB ) > maxSpeed){
-            bodyA.m_force.SetZero();
-            bodyA.m_torque = 0.0;
-            bodyB.m_force.SetZero();
-            bodyB.m_torque = 0.0;
+        var speedA = velA.Length();
+        var speedB = velB.Length();
+        var world = bodyA.GetWorld();
+        if ((speedA || speedB) > maxSpeed) {
+            
+            bodyA.SetLinearVelocity(new b2Vec2(bodyA.GetLinearVelocity().x, bodyA.GetLinearVelocity().y));
+            bodyB.SetLinearVelocity(new b2Vec2(bodyB.GetLinearVelocity().x, bodyB.GetLinearVelocity().y));
         }
-        
+
     };
 };

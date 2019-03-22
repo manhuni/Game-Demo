@@ -89,6 +89,7 @@ var EffectLayer = cc.Layer.extend({
             }//end inner loop for rows/cols pet
         } //end for loop add new pet
         gameLayer._allowedHint = true;
+        cc.log(gameLayer._allOfPets);
 
         for(var i = 0; i<allPos.length;i++){
            var SpellBall = new SpellFireSprite();
@@ -155,6 +156,7 @@ EffectLayer.prototype.runSomeEffect = function(delay, gameLayer, pets) {
     for (var i = 0; i < petMatched.length; i++) {
         var body = petMatched[i].body;
         body.SetType(b2Body.b2_staticBody);
+        body.SetActive(false);
         originalPets.push(petMatched[i].sprite);
     }
     //clone texture to create new sprite for effect

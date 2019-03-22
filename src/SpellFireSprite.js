@@ -13,9 +13,15 @@ var SpellFireSprite = cc.Sprite.extend({
         // emitter.texture = cc.textureCache.addImage(res.Particle);
         emitter.setPosition(cc.p(0,0));
         this.addChild(emitter);
-        cc.log("emitter",emitter.getPosition())
+        cc.log("emitter",emitter.getPosition());
+        this.scheduleUpdate();
         //test type visual(checked!)
-
+    },
+    update: function(){
+        var size = cc.director.getWinSize();
+        if(this.y > size.height-200){
+            this.removeFromParent(true);
+        }
     }
 
 });

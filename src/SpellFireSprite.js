@@ -7,7 +7,7 @@ var SpellFireSprite = cc.Sprite.extend({
         this.height = 32;
         this.anchorX = 0.5;
         this.anchorY = 0.5;
-        
+
         this.x = this._winSize.width/2;
         this.y = this._winSize.height/2;
 
@@ -17,9 +17,8 @@ var SpellFireSprite = cc.Sprite.extend({
         this.addChild(emitter);
         this.scheduleUpdate();
     },
-    fly: function(){
-
-        var action = cc.moveTo(2, cc.p(this._winSize.width/2,this._winSize.height));
+    fly: function(toHere){
+        var action = cc.moveTo(2, toHere);
         this.runAction(action);
     },
     update: function(){

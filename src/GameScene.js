@@ -1,7 +1,7 @@
 var GameLayer = cc.Layer.extend({
     world: null, //contain all physic
     _debugNode: null, //show element physics
-    _showDebugger: false,
+    _showDebugger: true,
     _effectNode: null,
     _allOfPets: [],
     _colorTypeArray: [],
@@ -41,8 +41,8 @@ var GameLayer = cc.Layer.extend({
 
         //create polygonshape for multifixture
 
-        var rows = 4;
-        var cols = 7;
+        var rows = 7;
+        var cols = 5;
 
         var PetProperties = [];
         for (var i = 0; i < rows; i++) {
@@ -50,7 +50,7 @@ var GameLayer = cc.Layer.extend({
             for (var j = 0; j < cols; j++) {
                 // var scale = Math.floor(Math.random() * (1.2 - 0.5 + 1)) + 0.5;
                 var scale = 1.0;
-                var mass = Math.floor(Math.random() * (massOfPets.length - 1 - 0 + 1)) + 0;
+                var mass = massOfPets[Math.floor(Math.random() * (massOfPets.length - 1 - 0 + 1)) + 0];
                 var json = 'random';
                 var style = 'dynamic';
                 var property = this.createPetObject(mass, scale, json, style);
@@ -59,7 +59,7 @@ var GameLayer = cc.Layer.extend({
         };
         //
 
-        var startX = 50;
+        var startX = 100;
         var startY = size.height / 2 - 220;
         var loadedPet = [];
 
@@ -122,34 +122,41 @@ var GameLayer = cc.Layer.extend({
     },
     initPhysicsWorld: function() {
         var screenSize = cc.director.getWinSize();
-        
+
         var gravity = new b2Vec2(0, -9.8);
-        this.world = new b2World(gravity, false); //true allow sleep
-        this.world.SetContinuousPhysics(true);
+        this.world = new b2World(gravity, true); //true allow sleep
+        this.world.SetContinuousPhysics(true); //
+        //
+        var lstPetCollision = new Box2D.Dynamics.b2ContactListener;
+        lstPetCollision.BeginContact = this.BeginContactLst.bind(this);
+        lstPetCollision.EndContact = this.EndContactLst.bind(this);
+        lstPetCollision.PreSolve = this.PreSolveLst.bind(this);
+        lstPetCollision.PostSolve = this.PostSolveLst.bind(this);
+        this.world.SetContactListener(lstPetCollision);
         //official
         var fixDef = new b2FixtureDef;
         fixDef.userData = null;
         fixDef.isSensor = false;
-        // fixDef.density = 5.0;
-        fixDef.friction = 0.5;
+        fixDef.density = 100.0;
+        fixDef.friction = 0.1;
         fixDef.restitution = 0.1;
 
         var bodyDef = new b2BodyDef;
         bodyDef.angularDamping = 0;
         bodyDef.linearDamping = 0;
-        // bodyDef.fixedRotation = true;
+        bodyDef.fixedRotation = true;
         //create ground
         bodyDef.type = b2Body.b2_staticBody;
         fixDef.shape = new b2PolygonShape;
-        fixDef.shape.SetAsBox(screenSize.width / PTM_RATIO, 0.1);
+        fixDef.shape.SetAsBox(screenSize.width / PTM_RATIO, 2);
         // upper
         bodyDef.position.Set(0, screenSize.height / PTM_RATIO);
         this.world.CreateBody(bodyDef).CreateFixture(fixDef);
         // bottom
-        bodyDef.position.Set(0, 0 + 2);
+        bodyDef.position.Set(0, 0);
         this.world.CreateBody(bodyDef).CreateFixture(fixDef);
 
-        fixDef.shape.SetAsBox(0.1, screenSize.height / PTM_RATIO);
+        fixDef.shape.SetAsBox(2, screenSize.height / PTM_RATIO);
         // left
         bodyDef.position.Set(0, 0);
         this.world.CreateBody(bodyDef).CreateFixture(fixDef);
@@ -224,9 +231,10 @@ var GameLayer = cc.Layer.extend({
     },
     update: function(dt) {
         var velocityIterations = 10;
-        var positionIterations = 1;
-        this.world.Step(dt, velocityIterations, positionIterations);
-
+        var positionIterations = 30;
+        var fps = 60;
+        var timeStep = 1.0 / (fps * 0.8);
+        this.world.Step(timeStep, velocityIterations, positionIterations);
         for (var b = this.world.GetBodyList(); b; b = b.GetNext()) {
             if (b.GetUserData() != null) {
                 //Synchronize the AtlasSprites position and rotation with the corresponding body
@@ -357,16 +365,20 @@ GameLayer.prototype.createMultiPolygonEntity = function(object, pos) {
         bodyDef.position.Set(pos.x / PTM_RATIO, pos.y / PTM_RATIO);
         bodyDef.userData = sprite;
         var body = _this.world.CreateBody(bodyDef);
+        body.SetAngularDamping(0);
+        // body.SetLinearVelocity(0, 0);
 
         // define a fixture def
         for (var i = 0; i < eachPolygon.length; i++) {
             var fixDef = new b2FixtureDef;
-            fixDef.density = object.mass;
-            fixDef.friction = 0.5;
-            fixDef.restitution = 0.2;
+            fixDef.density = object.mass/eachPolygon.length;
+            fixDef.friction = 0.1;
+            fixDef.restitution = 0.1;
             fixDef.shape = new b2PolygonShape;
             fixDef.shape.SetAsArray(eachPolygon[i], eachPolygon[i].length);
-            body.CreateFixture(fixDef);
+            var fixture = body.CreateFixture(fixDef);
+            cc.log(fixture);
+            cc.log(object.mass,eachPolygon.length);
 
         };
         var finalObj = {
@@ -434,7 +446,7 @@ GameLayer.prototype.createGround = function(object) {
         for (var i = 0; i < eachPolygon.length; i++) {
             var fixDef = new b2FixtureDef;
             fixDef.density = object.mass;
-            fixDef.friction = 0.5;
+            fixDef.friction = 0.1;
             fixDef.restitution = 0.1;
             fixDef.shape = new b2PolygonShape;
             fixDef.shape.SetAsArray(eachPolygon[i], eachPolygon[i].length);
@@ -641,4 +653,37 @@ GameLayer.prototype.getChilds = function(node) {
     };
 
     return childrens;
+};
+GameLayer.prototype.BeginContactLst = function(contact) {
+    // 
+};
+GameLayer.prototype.EndContactLst = function(contact) {
+    //
+};
+GameLayer.prototype.PreSolveLst = function(contact, oldManifold) {
+    //
+};
+GameLayer.prototype.PostSolveLst = function(contact, impulse) {
+    var fixtureA = contact.GetFixtureA();
+    var fixtureB = contact.GetFixtureB();
+    var bodyA = fixtureA.GetBody();
+    var bodyB = fixtureB.GetBody();
+    var userDataBodyA = bodyA.GetUserData();
+    var userDataBodyB = bodyB.GetUserData();
+    if((userDataBodyA && userDataBodyB) != null){
+        var maxSpeed = 1.0;
+        var velA = bodyA.GetLinearVelocity();
+        var velB = bodyB.GetLinearVelocity();
+
+        var speedA = bodyA.GetLinearVelocity().Length();
+        var speedB = bodyB.GetLinearVelocity().Length();
+
+        if(( speedA|| speedB ) > maxSpeed){
+            bodyA.m_force.SetZero();
+            bodyA.m_torque = 0.0;
+            bodyB.m_force.SetZero();
+            bodyB.m_torque = 0.0;
+        }
+        
+    };
 };

@@ -89,11 +89,13 @@ var EffectLayer = cc.Layer.extend({
             }//end inner loop for rows/cols pet
         } //end for loop add new pet
         gameLayer._allowedHint = true;
+
         for(var i = 0; i<allPos.length;i++){
            var SpellBall = new SpellFireSprite();
            SpellBall.setPosition(allPos[i]);
            gameLayer.addChild(SpellBall,gameConfig.INDEX.EFFECTNODE_INDEX);
-           SpellBall.fly();
+           var toHere = cc.p(size.width/2,size.height);
+           SpellBall.fly(toHere);
         };
     },
     getRandomPos: function(rows, cols, verticalPos, originalHorz) {
@@ -141,7 +143,7 @@ var EffectLayer = cc.Layer.extend({
     }
 });
 EffectLayer.prototype.runSomeEffect = function(delay, gameLayer, pets) {
-
+    cc.log(gameLayer._allOfPets);
     var b2Body = Box2D.Dynamics.b2Body;
     //decrease opacity
     for (var i = 0; i < pets.length; i++) {

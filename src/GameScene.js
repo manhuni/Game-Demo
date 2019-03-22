@@ -676,7 +676,7 @@ GameLayer.prototype.PostSolveLst = function(contact, impulse) {
     var userDataBodyA = bodyA.GetUserData();
     var userDataBodyB = bodyB.GetUserData();
     if ((userDataBodyA && userDataBodyB) != null) {
-        var maxSpeed = 2.0;
+        var maxSpeed = 1.0;
         var velA = bodyA.GetLinearVelocity();
         var velB = bodyB.GetLinearVelocity();
 
@@ -684,7 +684,7 @@ GameLayer.prototype.PostSolveLst = function(contact, impulse) {
         var speedB = velB.Length();
         var world = bodyA.GetWorld();
         if ((speedA || speedB) > maxSpeed) {
-            
+
             bodyA.SetLinearVelocity(new b2Vec2(bodyA.GetLinearVelocity().x, bodyA.GetLinearVelocity().y));
             bodyB.SetLinearVelocity(new b2Vec2(bodyB.GetLinearVelocity().x, bodyB.GetLinearVelocity().y));
         }

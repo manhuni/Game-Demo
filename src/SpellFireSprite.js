@@ -15,11 +15,14 @@ var SpellFireSprite = cc.Sprite.extend({
         this.addChild(emitter);
         cc.log("emitter",emitter.getPosition());
         this.scheduleUpdate();
-        //test type visual(checked!)
+    },
+    fly: function(){
+        var action = cc.moveTo(2, cc.p(size.width/2,size.height));
+        this.runAction(action);
     },
     update: function(){
         var size = cc.director.getWinSize();
-        if(this.y > size.height-200){
+        if(this.y > size.height-5){
             this.removeFromParent(true);
         }
     }

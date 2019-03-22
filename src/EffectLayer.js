@@ -33,6 +33,11 @@ var EffectLayer = cc.Layer.extend({
     },
     dropPetAnimation: function(gameLayer, pets) {
         var size = cc.director.getWinSize();
+        //store position to fire spell ball
+        var allPos = [];
+        for(var i = 0; i<pets.length;i++){
+            allPos.push(pets[i]["target"].getPosition());
+        };
         var delay = 0.5;
         // run effect before delete
         this.runSomeEffect(delay, gameLayer, pets);
@@ -84,6 +89,11 @@ var EffectLayer = cc.Layer.extend({
             }//end inner loop for rows/cols pet
         } //end for loop add new pet
         gameLayer._allowedHint = true;
+        for(var i = 0; i<allPos.length;i++){
+           var ParticleSprite = new SpellFireSprite();
+           ParticleSprite.setPosition(allPos[i]);
+           gameLayer.addChild(ParticleSprite,gameConfig.INDEX.EFFECTNODE_INDEX); 
+        };
     },
     getRandomPos: function(rows, cols, verticalPos, originalHorz) {
         var pos = [];

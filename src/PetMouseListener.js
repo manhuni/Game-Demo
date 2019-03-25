@@ -4,6 +4,9 @@ var PetMouseListener = cc.EventListener.create({
     swallowTouches: true,
     onTouchBegan: function(touch, event) {
         var gameLayer = event.getCurrentTarget();
+        if(gameLayer._enemyAttacking){
+            return;
+        };
         //when detect user click, game will unregister schedule
         gameLayer._allowedHint = false;
         //08.03.2019//click
@@ -24,7 +27,8 @@ var PetMouseListener = cc.EventListener.create({
                 // petObject[i].opacity = 255;
                 // // increase number of segment(purpose for count limit point, ex: 3 seg then allow clear pet)
                 gameLayer._effectNode._counterSegment = gameLayer._effectNode._counterSegment + 1;
-
+                //
+                petObject[i].shaking(0.02,false);
                 // //Adding a fire animation at center target pet
                 var fireAnimation = gameLayer._effectNode.addFireAnim(petObject[i]);
                 petObject[i].isVisited = true;
@@ -93,15 +97,27 @@ var PetMouseListener = cc.EventListener.create({
 
                     if (isPetUnderPathObj.isPetUnder != false) {
                         petNoneVisted[nearestPoint].isVisited = true;
+                        petNoneVisted[nearestPoint].shaking(0.02,false);
+
                         // First we will blow up that sprite
                         gameLayer._effectNode._counterSegment = gameLayer._effectNode._counterSegment + 1;
 
                         var angle = isPetUnderPathObj.angle;
                         // define a new segment
                         var beforeJoiner = gameLayer._effectNode.petEffected[gameLayer._effectNode.petEffected.length - 1]["joiner"];
+                        
                         var scaleYUPJ = 0;
-                        // beforeJoiner != null ? scaleYUPJ = beforeJoiner.scaleY + 0.07 : scaleYUPJ = gameConfig.SCALE.JOINER_FIXED_SCALEY;
-                        scaleYUPJ = gameConfig.SCALE.JOINER_FIXED_SCALEY;
+                        var opacityYUPJ = 0;
+
+                        if (beforeJoiner != null) {
+                            scaleYUPJ = beforeJoiner.scaleY + 0.1;
+                            (beforeJoiner.opacity < 240 )? opacityYUPJ = beforeJoiner.opacity + 10:  opacityYUPJ = 255;
+                        } else {
+                            scaleYUPJ = gameConfig.SCALE.JOINER_FIXED_SCALEY;
+                            opacityYUPJ = gameConfig.OPACITY.JOINER_FIXED_OPA;
+
+                        };
+                        // scaleYUPJ = gameConfig.SCALE.JOINER_FIXED_SCALEY;
 
                         var objJoinerProperties = {
                             x: lastTarget.getPosition().x,
@@ -109,7 +125,8 @@ var PetMouseListener = cc.EventListener.create({
                             anchorX: 0,
                             anchorY: 0.5,
                             scaleY: scaleYUPJ,
-                            rotation: angle
+                            rotation: angle,
+                            opacity: opacityYUPJ
                         };
 
                         var joinerSprite = new JoinerSprite(objJoinerProperties);
@@ -118,7 +135,9 @@ var PetMouseListener = cc.EventListener.create({
                         var disScaleRelative = cc.pDistance(lastTarget.getPosition(), petNoneVisted[nearestPoint].getPosition());
                         var widthOfJoiner = joinerSprite.width * gameConfig.SCALE.JOINER_FIXED_SCALEX; // pixel
                         var scaleRatioX = disScaleRelative * gameConfig.SCALE.JOINER_FIXED_SCALEX / widthOfJoiner;
+
                         joinerSprite.scaleX = scaleRatioX;
+                        joinerSprite.runEffect();
 
                         joinerSprite.setTag(gameConfig.TAG.JOIN_ANIM)
                         gameLayer._effectNode.addChild(joinerSprite, gameConfig.INDEX.EFFECTNODE_JOIN_INDEX);
@@ -133,7 +152,7 @@ var PetMouseListener = cc.EventListener.create({
                                 target: petNoneVisted[nearestPoint],
                                 fireAnimation: fireAnimation,
                                 joiner: joinerSprite
-                        })
+                            })
                             // gameLayer._effectNode.glowDownPet(gameLayer._effectNode.petEffected[gameLayer._effectNode.petEffected.length - 2]['target']);
                             // gameLayer._effectNode.glowUpPet(gameLayer._effectNode.petEffected[gameLayer._effectNode.petEffected.length - 1]['target']);
 
@@ -150,7 +169,7 @@ var PetMouseListener = cc.EventListener.create({
         // phai reset lai all target
         // o day can xet xem do dai cua doi tuong co dam bao lon hon 2 hay khong
         if (gameLayer._effectNode.petEffected.length >= 2) {
-            gameLayer._effectNode.dropPetAnimation(gameLayer,gameLayer._effectNode.petEffected);
+            gameLayer._effectNode.dropPetAnimation(gameLayer, gameLayer._effectNode.petEffected);
         };
 
         for (var i = 0; i < gameLayer._effectNode.petEffected.length; i++) {

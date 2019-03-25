@@ -35,7 +35,7 @@ var EffectLayer = cc.Layer.extend({
         var size = cc.director.getWinSize();
         //store position to fire spell ball
         var allPos = [];
-        for(var i = 0; i<pets.length;i++){
+        for (var i = 0; i < pets.length; i++) {
             allPos.push(pets[i]["target"].getPosition());
         };
         var delay = 0.5;
@@ -65,7 +65,7 @@ var EffectLayer = cc.Layer.extend({
         }
         // Add new pet
         var startX = 50;
-        var startY = size.height / 2;
+        var startY = size.height / 2 + 220;
         var loadedPet = [];
         //
         for (var i = 0; i < PetProperties.length; i++) {
@@ -86,18 +86,20 @@ var EffectLayer = cc.Layer.extend({
 
                 loadedPet[i].push(index);
                 gameLayer.createMultiPolygonEntity(PetProperties[i][j], pos);
-            }//end inner loop for rows/cols pet
+            } //end inner loop for rows/cols pet
         } //end for loop add new pet
         gameLayer._allowedHint = true;
-        cc.log(gameLayer._allOfPets);
-
-        for(var i = 0; i<allPos.length;i++){
-           var SpellBall = new SpellFireSprite();
-           SpellBall.setPosition(allPos[i]);
-           gameLayer.addChild(SpellBall,gameConfig.INDEX.EFFECTNODE_INDEX);
-           var toHere = cc.p(size.width/2,size.height);
-           SpellBall.fly(toHere);
+        // cc.log(gameLayer._allOfPets);
+        if (!gameLayer._enemyAttacking) {
+            for (var i = 0; i < allPos.length; i++) {
+                var SpellBall = new SpellFireSprite();
+                SpellBall.setPosition(allPos[i]);
+                gameLayer.addChild(SpellBall, gameConfig.INDEX.EFFECTNODE_INDEX);
+                var toHere = cc.p(size.width / 2, size.height);
+                SpellBall.fly(toHere);
+            };
         };
+
     },
     getRandomPos: function(rows, cols, verticalPos, originalHorz) {
         var pos = [];
@@ -156,9 +158,8 @@ EffectLayer.prototype.runSomeEffect = function(delay, gameLayer, pets) {
     for (var i = 0; i < petMatched.length; i++) {
         var body = petMatched[i].body;
         body.SetType(b2Body.b2_staticBody);
-        body.SetActive(false);
         originalPets.push(petMatched[i].sprite);
-    }
+    };
     //clone texture to create new sprite for effect
     var clonedPetsSprite = [];
     for (var i = 0; i < pets.length; i++) {
@@ -186,7 +187,7 @@ EffectLayer.prototype.runSomeEffect = function(delay, gameLayer, pets) {
         };
         actionFade = cc.fadeOut(delay);
 
-        spawn =  cc.spawn(actionMove,actionFade);
+        spawn = cc.spawn(actionMove, actionFade);
         actionArray.push(spawn);
     };
     //runaction now
@@ -218,7 +219,7 @@ EffectLayer.prototype.findMatchedPets = function(gameLayer, pets) {
                     body: body
                 });
                 //delete this pet in array all pet if you don't want to get over flow
-                allPet.splice(j,1);
+                allPet.splice(j, 1);
             }
         }
     }

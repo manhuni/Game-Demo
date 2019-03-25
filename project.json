@@ -20,6 +20,7 @@
         "src/GameScene.js",
         "src/PetMouseListener.js",
         "src/PetsSprite.js",
+        "src/EnemySprite.js",
         "src/SpellFireSprite.js",
         "src/JoinerSprite.js",
         "src/FireSprite.js",

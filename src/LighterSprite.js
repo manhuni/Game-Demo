@@ -2,6 +2,7 @@ var LighterSprite = cc.Sprite.extend({
     ctor: function(plist,imagesheet) {
 
         this._super();
+        this.opacity = 150;
         var size = cc.director.getWinSize();
         cc.spriteFrameCache.addSpriteFrames(plist, imagesheet);
         this.initWithSpriteFrameName("lighter_0000.png");

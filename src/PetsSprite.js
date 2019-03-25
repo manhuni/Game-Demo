@@ -3,34 +3,46 @@ var PetSprite = cc.Sprite.extend({
     isVisited: false,
     colorType: null,
     hinted: false,
+    id: null,
+    plist: null,
+    imagesheet: null,
     gameGroup: gameConfig.GAMEGROUP.PET,
-    ctor: function(img) {
+    ctor: function(id,plist,imagesheet) {
         this._super();
         var size = cc.director.getWinSize();
-        cc.spriteFrameCache.addSpriteFrames(res.TSUM_PLIST, res.TSUM_PNG);
+        this.plist = plist;
+        this.imagesheet = imagesheet;
+        this.id = id;
+        cc.spriteFrameCache.addSpriteFrames(plist, imagesheet);
         //init with pet
-        this.initWithSpriteFrameName(img);
+        var initFrame = `${id}_idle.png`;
+        this.initWithSpriteFrameName(initFrame);
         this.opacity = 250;
         //test type visual(checked!)
         this.typeLabel = new cc.LabelTTF("", "Arial", 58);
         this.typeLabel.setPosition(cc.p(this.width/2,0));
         this.addChild(this.typeLabel);
-        
-        // var size = cc.director.getWinSize();
-        // cc.spriteFrameCache.addSpriteFrames(res.pet0_PLIST, res.pet0_PNG);
-
-        // this.initWithSpriteFrameName("pet00.png");
-        // //Create SpriteFrame and AnimationFrame with Frame Data
-        // var animFrames = [];
-        // for (var i = 0; i < 9; i++) {
-        //     var str = "pet0" + i + ".png";
-        //     var spriteFrame = cc.spriteFrameCache.getSpriteFrame(str);
-        //     animFrames.push(spriteFrame);
-        // };
-        // var animation = new cc.Animation(animFrames, 0.08);
-        // this.runAction(cc.animate(animation).repeatForever());
-        
-    }   
+    },
+    shaking: function(step, repeat){
+        var animFrames = [];
+        for (var i = 0; i < 5; i++) {
+            var str = `${this.id}_shaking${i}.png`;
+            var spriteFrame = cc.spriteFrameCache.getSpriteFrame(str);
+            animFrames.push(spriteFrame);
+        };
+        var animation = new cc.Animation(animFrames, step);
+        animation.setRestoreOriginalFrame(true);
+        var action = cc.animate(animation);
+        var seq = cc.sequence(action,cc.callFunc(function(){
+            // this.setTexture(`${this.id}_idle.png`);
+        },this))
+        if(repeat){
+            this.runAction(seq).repeatForever();
+        }else{
+            this.runAction(seq);
+        }
+        //recover
+    }
 
 });
 //this method shoud be removed after test

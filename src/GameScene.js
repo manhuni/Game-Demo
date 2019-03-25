@@ -1,5 +1,6 @@
 var GameLayer = cc.Layer.extend({
     world: null, //contain all physic
+    enemy: null,
     _debugNode: null, //show element physics
     _showDebugger: true,
     _effectNode: null,
@@ -12,6 +13,7 @@ var GameLayer = cc.Layer.extend({
     _allowedHint: true,
     _timeAddHint: 3, //5 second
     _timeLastedHint: 0,
+    _enemyAttacking: false,
     ctor: function() {
         this._super();
         this.init();
@@ -26,23 +28,30 @@ var GameLayer = cc.Layer.extend({
         //turn on or off debug node physic
         this.showPhysicWorld(this._showDebugger);
         // //create an object physic sprite
-        var pos1 = cc.p(size.width / 2, size.height / 2 + 200);
-        var pos2 = cc.p(size.width / 2, size.height / 2);
         //
         //create polygonshape for multifixture
-        // var posGround = cc.p(size.width / 2, 0);
-        // var scaleGround = 1.0;
-        // var massGround = 10;
-        // var jsonPathGround = res.gameBackground_JSON;
-        // var styleGround = 'ground';
+        //create in background
+        var ingameGameBackground = cc.Sprite.create(res.gameGroundBot);
+        
+        var posGround = cc.p(size.width / 2, ingameGameBackground.height/2);
+        var scaleGround = 1.0;
+        var massGround = 10;
+        var jsonPathGround = res.gameBackground_JSON;
+        var styleGround = 'ground';
 
-        // var objectGround = this.createPetObject(posGround, scaleGround, massGround, jsonPathGround, styleGround);
-        // this.createGround(objectGround);
+        var objectGround = {
+            json: jsonPathGround,
+            mass: massGround,
+            style: styleGround,
+            sprite: ingameGameBackground,
+            position: posGround
+        }
+        this.createGround(objectGround);
 
         //create polygonshape for multifixture
 
-        var rows = 7;
-        var cols = 5;
+        var rows = 8;
+        var cols = 6;
 
         var PetProperties = [];
         for (var i = 0; i < rows; i++) {
@@ -59,8 +68,8 @@ var GameLayer = cc.Layer.extend({
         };
         //
 
-        var startX = 100;
-        var startY = size.height / 2 - 220;
+        var startX = 50;
+        var startY = 250;
         var loadedPet = [];
 
         for (var i = 0; i < PetProperties.length; i++) {
@@ -86,8 +95,6 @@ var GameLayer = cc.Layer.extend({
 
         //listen mouse event click on gameLayer
         cc.eventManager.addListener(PetMouseListener, this);
-        //update for hint color same type random pet, after 3 seconds program will auto find random color to hint
-        //this hint will diable when user click, wait if user don't click after 3s then hint
 
         //need update for physics requirement
         this.scheduleUpdate();
@@ -95,35 +102,37 @@ var GameLayer = cc.Layer.extend({
     init: function() {
         this._super();
         var size = cc.director.getWinSize();
-        //background image
-        var size = cc.director.getWinSize();
-        // var GameBackground = cc.Sprite.create(res.gameBackground);
-        // GameBackground.setPosition(cc.p(size.width / 2, size.height / 2));
-        // this.addChild(GameBackground, gameConfig.INDEX.ANIMATIONPET_INDEX);
-        // end test
 
         //add shuffle button
         //2.create a menu and assign onPlay event callback to it
-        var norShuffle = cc.Sprite.create(res.Shuffle_Button_Nor);
-        var selShuffle = cc.Sprite.create(res.Shuffle_Button_Sel);
+        var Shuffle_Button = cc.Sprite.create(res.Shuffle_Button);
         // //test mode
-        norShuffle.scale = selShuffle.scale = 0.8;
-        var menuItemShuffle = cc.MenuItemSprite.create(norShuffle, selShuffle, this.shuffleAllPhysics, this);
+        var menuItemShuffle = cc.MenuItemSprite.create(Shuffle_Button, null, this.shuffleAllPhysics, this);
 
         var menu = cc.Menu.create(menuItemShuffle);
-        menu.setPosition(size.width - 50, 75);
+        menu.setPosition(size.width-Shuffle_Button.width/2, Shuffle_Button.height/2);
         this.addChild(menu, gameConfig.INDEX.SHUFFLE_INDEX);
-        //create inner background
-        // var sprite = cc.Sprite.create(res.gameBackground_inner);
-        // sprite.setPosition(cc.p(size.width / 2, size.height / 2));
-        // this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
+        //create background
+        var BackgroundTop = cc.Sprite.create(res.gameGroundTop);
+        BackgroundTop.setPosition(cc.p(size.width / 2, size.height / 2));
+        
         //create a animation effect pet
+        this.enemy = new EnemySprite();
+        this.enemy.setPosition(cc.p(size.width/2,size.height/2+300));
+        BackgroundTop.addChild(this.enemy);
+        this.addChild(BackgroundTop, gameConfig.INDEX.GAMELAYER_INDEX);
+        var actionBy = cc.moveBy(3, cc.p(0, 80));
+        var actionByBack = actionBy.reverse();
+        this.enemy.runAction(cc.sequence(actionBy, actionByBack)).repeatForever();
+        //
+        
 
     },
     initPhysicsWorld: function() {
         var screenSize = cc.director.getWinSize();
 
         var gravity = new b2Vec2(0, -9.8);
+        // var gravity = new b2Vec2(0, 0);
         this.world = new b2World(gravity, true); //true allow sleep
         this.world.SetContinuousPhysics(true); //
         //
@@ -138,8 +147,8 @@ var GameLayer = cc.Layer.extend({
         fixDef.userData = null;
         fixDef.isSensor = false;
         fixDef.density = 500.0;
-        fixDef.friction = 0.1;
-        fixDef.restitution = 0.0;
+        fixDef.friction =0.0;
+        fixDef.restitution = 0.3;
 
         var bodyDef = new b2BodyDef;
         bodyDef.angularDamping = 0;
@@ -158,15 +167,18 @@ var GameLayer = cc.Layer.extend({
 
         fixDef.shape.SetAsBox(2, screenSize.height / PTM_RATIO);
         // left
-        bodyDef.position.Set(0, 0);
+        bodyDef.position.Set(-2, 0);
         this.world.CreateBody(bodyDef).CreateFixture(fixDef);
         // right
-        bodyDef.position.Set(screenSize.width / PTM_RATIO, 0);
+        bodyDef.position.Set((screenSize.width / PTM_RATIO)+2, 0);
         this.world.CreateBody(bodyDef).CreateFixture(fixDef);
         //end official
 
     },
     shuffleAllPhysics: function() {
+        if(this._enemyAttacking){
+            return;
+        };
         //We need limit speed or velocity limit
         //A torque equal to T = IV/t I: rotational inertia(quan tinh quay), V: velocity, t is the time we will apply the torque,
         //refer to http://www.iforce2d.net/b2dtut/rotate-to-angle
@@ -274,6 +286,8 @@ GameLayer.prototype.findPetHaveAlreadyJoin = function(gameLayer, touchPosition, 
     var distanceLastPrePet = cc.pDistance(touchPosition, previousTargetPos);
     //remove this joiner
     if (distanceLastPrePet < joinerConfig.permitedJoinerDistance) {
+
+        arrayVisitedPet[arrayVisitedPet.length - 1]["target"].shaking(0.02,false);
         gameLayer._effectNode.removeChild(arrayVisitedPet[arrayVisitedPet.length - 1]["joiner"], true);
         gameLayer._effectNode.removeChild(arrayVisitedPet[arrayVisitedPet.length - 1]["fireAnimation"], true);
         gameLayer._effectNode._counterSegment = gameLayer._effectNode._counterSegment - 1;
@@ -301,21 +315,31 @@ GameLayer.prototype.createPetObject = function(mass, scale, jsonPath, style) {
     //Math.floor(Math.random() * (max - min + 1)) + min;
     // var resourcePet = typeOfPet[Math.floor(Math.random() * ((typeOfPet.length - 1) - 0 + 1)) + 0];
     var resourcePet = typeTestOfPet[Math.floor(Math.random() * ((typeTestOfPet.length - 1) - 0 + 1)) + 0];
+    var sprite = null;
     var json = null;
-    var image = null;
+    var id = null;
+    var plist = null;
+    var psheet = null;
+
     var colorType = null;
     if (jsonPath != 'random') {
         json = jsonPath;
-    } else {
-        json = `res/tsum/${resourcePet}.json`;
-        image = `${resourcePet}.png`;
-    };
-    var sprite = new PetSprite(image);
-    sprite.scale = scale;
+        id = `tsum0`;
+        plist = `res/tsum/${id}/${id}.plist`;
+        psheet = `res/tsum/${id}/${id}.png`;
 
+    } else {
+        id = `${resourcePet}`;
+        json = `res/tsum/${id}/${id}.json`;
+        plist = `res/tsum/${id}/${id}.plist`;
+        psheet = `res/tsum/${id}/${id}.png`;
+        
+    };
+    sprite = new PetSprite(id,plist,psheet);
+    sprite.scale = scale;
     return {
         json: json,
-        image: image,
+        id: id,
         mass: mass,
         style: style,
         sprite: sprite
@@ -335,16 +359,15 @@ GameLayer.prototype.createMultiPolygonEntity = function(object, pos) {
 
         var sprite = object.sprite;
         sprite.setPosition(pos);
-        _this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX);
-        var s = sprite.getContentSize();
-
+        _this.addChild(sprite, gameConfig.INDEX.GAMELAYER_INDEX_BACKGROUND);
+        var s = sprite.getBoundingBox();
         //
         var eachPolygon = [];
         for (var i = 0; i < polygons.length; i++) {
             eachPolygon[i] = [];
             for (var j = 0; j < polygons[i].length; j++) {
-                var x = ((polygons[i][j].x) - 0.5) * s.width / PTM_RATIO;
-                var y = ((polygons[i][j].y) - 0.5) * s.height / PTM_RATIO;
+                var x = ((polygons[i][j].x) - 0.5) * (s.width-20) / PTM_RATIO;//-10 offset for custom size
+                var y = ((polygons[i][j].y) - 0.5) * (s.height-20) / PTM_RATIO;//-10 offset for custom size
                 eachPolygon[i].push({
                     x,
                     y
@@ -352,8 +375,6 @@ GameLayer.prototype.createMultiPolygonEntity = function(object, pos) {
             }
         };
         //
-        cc.log(">>ONE<<")
-        cc.log(eachPolygon);
         // define a body def
         var bodyDef = new b2BodyDef;
         if (object.style != 'static') {
@@ -367,16 +388,18 @@ GameLayer.prototype.createMultiPolygonEntity = function(object, pos) {
         bodyDef.position.Set(pos.x / PTM_RATIO, pos.y / PTM_RATIO);
         bodyDef.userData = sprite;
         var body = _this.world.CreateBody(bodyDef);
-        body.SetAngularDamping(0);
+        //Math.floor(Math.random() * (max - min + 1)) + min;
+        var maxForce = -20;
+        var minForce = -9;
+        body.ApplyImpulse(new b2Vec2(0,Math.floor(Math.random() * ((maxForce) - (minForce) + 1)) + minForce),body.GetWorldCenter());
+
         var fixture = [];
         // define a fixture def
-        var dataArea = [];
-        cc.log(eachPolygon);
         for (var i = 0; i < eachPolygon.length; i++) {
             var fixDef = new b2FixtureDef;
             fixDef.density = Math.floor(object.mass / eachPolygon.length);
-            fixDef.friction = 0.1;
-            fixDef.restitution = 0.0;
+            fixDef.friction = 0.2;
+            fixDef.restitution = 0.3;
             fixDef.shape = new b2PolygonShape;
             fixDef.shape.SetAsArray(eachPolygon[i], eachPolygon[i].length);
             var fixt = body.CreateFixture(fixDef);
@@ -418,12 +441,11 @@ GameLayer.prototype.createGround = function(object) {
     this.loadAllVerticesFromJson(jsonPath).then(function(data) {
         var rigidBodies = data.rigidBodies[0];
         var colorType = rigidBodies.name;
-        var imagePath = object.imagePath;
         var polygons = rigidBodies.polygons;
 
-        var sprite = new cc.Sprite.create(imagePath);
+        var sprite = object.sprite;
         sprite.setPosition(object.position);
-        sprite.scale = object.scale;
+        _this.addChild(sprite,gameConfig.INDEX.GAMELAYER_INDEX_BACKGROUND);
         var s = sprite.getContentSize();
 
         //
@@ -432,7 +454,7 @@ GameLayer.prototype.createGround = function(object) {
             eachPolygon[i] = [];
             for (var j = 0; j < polygons[i].length; j++) {
                 var x = ((polygons[i][j].x) - 0.5) * s.width / PTM_RATIO;
-                var y = ((polygons[i][j].y)) * s.height / PTM_RATIO;
+                var y = ((polygons[i][j].y)- 0.5) * s.height / PTM_RATIO;
                 eachPolygon[i].push({
                     x,
                     y
@@ -443,16 +465,15 @@ GameLayer.prototype.createGround = function(object) {
         var bodyDef = new b2BodyDef;
         bodyDef.type = b2Body.b2_staticBody;
         bodyDef.position.Set(object.position.x / PTM_RATIO, object.position.y / PTM_RATIO);
-        bodyDef.userData = null;
-        _this.removeChild(sprite, true);
+        bodyDef.userData = sprite;
 
         var body = _this.world.CreateBody(bodyDef);
         // define a fixture def
         for (var i = 0; i < eachPolygon.length; i++) {
             var fixDef = new b2FixtureDef;
             fixDef.density = object.mass;
-            fixDef.friction = 0.1;
-            fixDef.restitution = 0.0;
+            fixDef.friction = 0.0;
+            fixDef.restitution = 0.3;
             fixDef.shape = new b2PolygonShape;
             fixDef.shape.SetAsArray(eachPolygon[i], eachPolygon[i].length);
             body.CreateFixture(fixDef);
